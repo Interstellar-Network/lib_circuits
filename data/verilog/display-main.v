@@ -2,7 +2,6 @@
 // using visual crypto to display random segments
 // input: segments to display, random bits
 // output: pixels
-// (c) Skeyecode
 
 // main module integrating sub-circuits (xorexpand, rndswitch and segment2pixel)
 module main(msg, rnd, z, pix);
