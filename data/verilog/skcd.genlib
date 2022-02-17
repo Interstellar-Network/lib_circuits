@@ -1,0 +1,16 @@
+GATE ZERO 0 O=CONST0;                                        # 0000 0
+GATE NOR  2 O=!(a+b);    PIN * INV     1 999 1.4 0.5 1.4 0.5 # 0001 1
+GATE AANB 5 O=a*!b;      PIN * UNKNOWN 2 999 2.1 0.5 2.1 0.5 # 0010 2
+GATE INVB 1 O=!b;        PIN * INV     1 999 0.9 0.3 0.9 0.3 # 0011 3
+GATE NAAB 5 O=!a*b;      PIN * UNKNOWN 2 999 2.1 0.5 2.1 0.5 # 0100 4
+GATE INV  1 O=!a;        PIN * INV     1 999 0.9 0.3 0.9 0.3 # 0101 5
+GATE XOR  0 O=a*!b+!a*b; PIN * UNKNOWN 2 999 1.9 0.5 1.9 0.5 # 0110 6
+GATE NAND 2 O=!(a*b);    PIN * INV     1 999 1.0 0.2 1.0 0.2 # 0111 7
+GATE AND  3 O=a*b;       PIN * NONINV  1 999 1.9 0.3 1.9 0.3 # 1000 8
+GATE XNOR 5 O=a*b+!a*!b; PIN * UNKNOWN 2 999 2.1 0.5 2.1 0.5 # 1001 9
+GATE BUF  1 O=a;         PIN * NONINV  1 999 1.0 0.0 1.0 0.0 # 1010 10
+GATE AONB 5 O=a+!b;      PIN * UNKNOWN 2 999 2.1 0.5 2.1 0.5 # 1011 11
+GATE BUFB 1 O=b;         PIN * NONINV  1 999 1.0 0.0 1.0 0.0 # 1100 12
+GATE NAOB 5 O=!a+b;      PIN * UNKNOWN 2 999 2.1 0.5 2.1 0.5 # 1101 13
+GATE OR   3 O=a+b;       PIN * NONINV  1 999 2.4 0.3 2.4 0.3 # 1110 14
+GATE ONE  0 O=CONST1;                                        # 1111 15
