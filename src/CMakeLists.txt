@@ -1,0 +1,34 @@
+################################################################################
+
+add_subdirectory(abc_wrapper)
+add_subdirectory(segments2pixels)
+add_subdirectory(verilog)
+add_subdirectory(utils/encode_rle/)
+add_subdirectory(utils/files/)
+add_subdirectory(blif)
+add_subdirectory(skcd)
+
+################################################################################
+
+add_library(circuit_lib
+    circuit_lib.cpp
+    # TODO move to separate libs, and under utils/
+    utils_noncopyable.cpp
+)
+
+target_link_libraries(circuit_lib
+    PRIVATE
+    # mockturtle # TODO?
+    absl::strings
+
+    abc-wrapper
+    segments2pixels
+    verilog_compiler
+    resources
+    skcd
+)
+
+target_include_directories(circuit_lib
+    INTERFACE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)

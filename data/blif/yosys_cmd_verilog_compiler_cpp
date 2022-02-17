@@ -1,0 +1,18 @@
+
+read_verilog /home/pratn/Documents/interstellar/lib_circuits/data/verilog/generated/pinpad-define.v /tmp/interstellar-circuits/15231824715867042939/segments2pixels.v /home/pratn/Documents/interstellar/lib_circuits/data/verilog/rndswitch.v /home/pratn/Documents/interstellar/lib_circuits/data/verilog/xorexpand.v /home/pratn/Documents/interstellar/lib_circuits/data/verilog/display-main.v
+
+# TODO more ?
+proc
+# synth calls abc?
+# synth
+techmap
+
+# read skcd.genlib
+# read input.blif
+# strash
+# rewrite
+# refactor
+# map -a
+# TODO abc ???
+
+write_blif /home/pratn/Documents/interstellar/lib_circuits/data/blif/output.blif
