@@ -1,0 +1,23 @@
+# https://stackoverflow.com/questions/68172034/convert-verilog-to-aiger-with-yosys
+
+#read_verilog define.v ../verilog/xorexpand.v ../verilog/rndswitch.v ../verilog/display-main.v
+
+## synth
+
+#aigmap
+
+#write_aiger -ascii output.aag
+
+
+# https://hongcezh.people.ust.hk/post/yosys-script/
+
+read_verilog -formal define.v ../verilog/rndswitch.v
+prep -top rndswitch
+flatten
+memory -nordff
+setundef -undriven -init -expose
+# sim -clock <clock-name> -reset <reset-name> -rstlen <reset-cycle> -n <simulation-cycle> -w rndswitch
+delete -output
+techmap
+# abc -fast -g AND
+write_aiger -zinit output.aag
