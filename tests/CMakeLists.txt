@@ -42,6 +42,6 @@ add_google_test(hello_test "circuit_lib")
 gtest_discover_tests(hello_test)
 
 # basic cli(not googletest); but that still works fine
-add_google_test(hello_cli "circuit_lib mockturtle resources")
+add_google_test(hello_cli "circuit_lib mockturtle absl::strings resources")
 
 ################################################################################

@@ -1,3 +1,6 @@
+#include <absl/strings/str_cat.h>
+#include <absl/strings/str_replace.h>
+
 #include <filesystem>
 #include <lorina/diagnostics.hpp>
 #include <lorina/verilog.hpp>
@@ -7,12 +10,37 @@
 
 // TODO move into lib
 // TODO read values from "config", eg add CircuitConfig class with internal map?
-void AddVerilogDefines(std::ofstream* output_stream_v) {
-  (*output_stream_v) << "`define RNDSIZE 42\n";
-  (*output_stream_v) << "`define BITMAP_NB_SEGMENTS 42\n";
-  (*output_stream_v) << "`define WIDTH 42\n";
-  (*output_stream_v) << "`define HEIGHT 42\n";
-  (*output_stream_v) << "\n";
+// void AddVerilogDefines(std::ofstream* output_stream_v) {
+//   // (*output_stream_v) << "`define RNDSIZE 42\n";
+//   // (*output_stream_v) << "`define BITMAP_NB_SEGMENTS 42\n";
+//   // (*output_stream_v) << "`define WIDTH 42\n";
+//   // (*output_stream_v) << "`define HEIGHT 42\n";
+//   // NOTE: lorina can not parse `DEFINE so we put everything in a module
+//   (*output_stream_v) << "module defines;\n";
+//   // (*output_stream_v) << "integer RNDSIZE = 42;\n";
+//   // (*output_stream_v) << "integer BITMAP_NB_SEGMENTS = 42;\n";
+//   // (*output_stream_v) << "integer WIDTH = 42;\n";
+//   // (*output_stream_v) << "integer HEIGHT = 42;\n";
+//   (*output_stream_v) << "reg RNDSIZE = 42;\n";
+//   (*output_stream_v) << "reg BITMAP_NB_SEGMENTS = 42;\n";
+//   (*output_stream_v) << "reg WIDTH = 42;\n";
+//   (*output_stream_v) << "reg HEIGHT = 42;\n";
+//   (*output_stream_v) << "endmodule\n";
+//   (*output_stream_v) << "\n";
+// }
+
+/**
+ * lorina's verilog parser DOES NOT support `define
+ * so we do a basic find-and-replace ourself
+ */
+void ProcessDefines(std::string* str_v) {
+  // TODO pass a map argument eg {"`define AAA": 42}
+  int count = absl::StrReplaceAll({{"`RNDSIZE", "42"},
+                                   {"`BITMAP_NB_SEGMENTS", "42"},
+                                   {"`WIDTH", "42"},
+                                   {"`HEIGHT", "42"}},
+                                  str_v);
+  assert(count && "No replacement occurered; is there a `define missing?");
 }
 
 // https://github.com/hriener/lorina/blob/e05e81df2a8c0317739875795fab00d26a4bc264/test/verilog.cpp
@@ -190,32 +218,42 @@ class simple_verilog_reader : public lorina::verilog_reader {
   mutable std::vector<module_info> _instantiated_modules;
 }; /* simple_verilog_reader */
 
+std::string ReadVerilogFromDataDir(const std::string& v_file_name) {
+  // TODO avoid useless string copy x2?
+  auto v_path =
+      std::filesystem::path(interstellar::data_dir) / "verilog" / v_file_name;
+  std::ifstream input_stream_v(v_path, std::ios_base::binary);
+  std::ostringstream sstr;
+  sstr << input_stream_v.rdbuf();
+  return sstr.str();
+}
+
 int main() {
   // concat all the data/verilog/*.v into this tmpfile
   // TODO use /tmp + unique name
   // std::FILE* tmpf = std::tmpfile();
   std::string output_name_v = "output.v";
 
-  {
-    std::ofstream output_stream_v(output_name_v, std::ios::binary);
+  std::ofstream output_stream_v(output_name_v, std::ios::binary);
 
-    AddVerilogDefines(&output_stream_v);
+  // AddVerilogDefines(&output_stream_v);
+  std::string segment2pixels_str =
+      ReadVerilogFromDataDir("message-display-segment2pixels.v");
+  std::string xorexpand_str = ReadVerilogFromDataDir("xorexpand.v");
+  std::string rndswitch_str = ReadVerilogFromDataDir("rndswitch.v");
+  std::string display_main_str = ReadVerilogFromDataDir("display-main.v");
 
-    // WARNING: order matters for verilog compilation !
-    for (auto v_file_name : {
-             "message-display-segment2pixels.v",  // TODO REMOVE! this MUST be
-                                                  // generated
-             "xorexpand.v",
-             "rndswitch.v",
-             "display-main.v",
-         }) {
-      auto v_path = std::filesystem::path(interstellar::data_dir) / "verilog" /
-                    v_file_name;
-      std::ifstream input_stream_v(v_path, std::ios_base::binary);
+  // concat all the .v files
+  // WARNING: order matters for verilog compilation !
+  std::string output_cat_v = absl::StrCat(segment2pixels_str, xorexpand_str,
+                                          rndswitch_str, display_main_str);
 
-      output_stream_v << input_stream_v.rdbuf();
-    }
-  }
+  ProcessDefines(&output_cat_v);
+
+  // now we can write the final .v file
+  // it SHOULD be readable by yosys and iverilog; CHECK when developping!
+  output_stream_v << output_cat_v;
+  output_stream_v.flush();
 
   lorina::text_diagnostics consumer;
   lorina::diagnostic_engine diag(&consumer);

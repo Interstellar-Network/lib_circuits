@@ -4,7 +4,7 @@
 // output: pixels
 
 // main module integrating sub-circuits (xorexpand, rndswitch and segment2pixel)
-module main(msg, rnd, z, pix);
+module top(msg, rnd, z, pix);
 input [`BITMAP_NB_SEGMENTS-1:0] msg; // message to display
 input [`RNDSIZE-1:0] rnd;      // random bits
 input z; // input which must be set to 0 (kludge to keep BUF gates)
