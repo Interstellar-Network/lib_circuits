@@ -8,6 +8,8 @@
 
 #write_aiger -ascii output.aag
 
+# RUN
+# (cd /home/pratn/Documents/interstellar/lib_circuits/data/aig && /home/pratn/Documents/interstellar/lib_circuits/build/_deps/yosys_dl-src/yosys -s /home/pratn/Documents/interstellar/lib_circuits/data/aig/yosys_cmd)
 
 # https://hongcezh.people.ust.hk/post/yosys-script/
 
@@ -19,5 +21,5 @@ setundef -undriven -init -expose
 # sim -clock <clock-name> -reset <reset-name> -rstlen <reset-cycle> -n <simulation-cycle> -w rndswitch
 delete -output
 techmap
-# abc -fast -g AND
-write_aiger -zinit output.aag
+abc -fast -g AND
+write_aiger -zinit rndswitch.aag

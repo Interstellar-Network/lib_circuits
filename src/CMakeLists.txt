@@ -4,6 +4,7 @@ add_library(circuit_lib
 
 target_link_libraries(circuit_lib
     PRIVATE
-    mockturtle
+    # TODO(mockturtle)
+    # mockturtle
     resources
 )

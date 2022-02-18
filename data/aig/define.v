@@ -1,4 +1,4 @@
-`define RNDSIZE 42
-`define BITMAP_NB_SEGMENTS 42
-`define WIDTH 42
-`define HEIGHT 42
+`define WIDTH 56
+`define HEIGHT 24
+`define RNDSIZE 9
+`define BITMAP_NB_SEGMENTS 28
