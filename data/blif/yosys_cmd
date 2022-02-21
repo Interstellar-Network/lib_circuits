@@ -1,0 +1,17 @@
+# TODO -formal ?
+read_verilog /home/pratn/Documents/interstellar/lib_circuits/data/blif/define.v /home/pratn/Documents/interstellar/lib_circuits/data/verilog/rndswitch.v
+# TODO more ?
+techmap
+write_blif /home/pratn/Documents/interstellar/lib_circuits/data/blif/rndswitch.blif
+
+# TODO -formal ?
+read_verilog /home/pratn/Documents/interstellar/lib_circuits/data/blif/define.v /home/pratn/Documents/interstellar/lib_circuits/data/verilog/xorexpand.v
+# TODO more ?
+techmap
+write_blif /home/pratn/Documents/interstellar/lib_circuits/data/blif/xorexpand.blif
+
+# TODO -formal ?
+read_verilog /home/pratn/Documents/interstellar/lib_circuits/data/blif/define.v /home/pratn/Documents/interstellar/lib_circuits/data/verilog/display-main.v
+# TODO more ?
+techmap
+write_blif /home/pratn/Documents/interstellar/lib_circuits/data/blif/display-main.blif

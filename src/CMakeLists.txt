@@ -1,10 +1,31 @@
+################################################################################
+
+add_subdirectory(segments2pixels)
+add_subdirectory(verilog)
+
+################################################################################
+
 add_library(circuit_lib
-    lib.cpp
+    blif_parser.cpp
+    circuit_lib.cpp
+    skcd.cpp
+    # TODO move to separate lib, and under utils/
+    utils_noncopyable.cpp
 )
 
 target_link_libraries(circuit_lib
     PRIVATE
-    # TODO(mockturtle)
-    # mockturtle
+    # mockturtle # TODO?
+    fmt
+    xxhash
+    absl::strings
+
+    segments2pixels
+    verilog_compiler
     resources
+)
+
+target_include_directories(circuit_lib
+    INTERFACE
+    ${CMAKE_CURRENT_SOURCE_DIR}
 )

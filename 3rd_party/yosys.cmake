@@ -90,7 +90,7 @@ ExternalProject_Add(yosys_ext
 file(GENERATE OUTPUT ${yosys_dl_SOURCE_DIR}/Makefile.conf CONTENT
     # TODO pass correct CXX flags(at least use the same warnings than CMake)
     # ENABLE_DEBUG: NOT ENOUGH, also needs "fno-limit-debug-info"
-    "ENABLE_LIBYOSYS := 0\nENABLE_ABC := 1\nLIBDIR := ${yosys_dl_SOURCE_DIR}\nENABLE_DEBUG := $<IF:$<CONFIG:Debug>,1,0>\n"
+    "ENABLE_LIBYOSYS := 1\nENABLE_ABC := 1\nLIBDIR := ${yosys_dl_SOURCE_DIR}\nENABLE_DEBUG := $<IF:$<CONFIG:Debug>,1,0>\n"
 )
 ExternalProject_Add_StepDependencies(yosys_ext build ${yosys_dl_SOURCE_DIR}/Makefile.conf)
 
@@ -101,4 +101,11 @@ set_target_properties(yosys
     PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES ${yosys_dl_SOURCE_DIR}
     IMPORTED_LOCATION ${yosys_dl_SOURCE_DIR}/libyosys.so
+)
+
+target_compile_definitions(yosys
+    INTERFACE
+    # kernel/yosys.h:75:4: error: It looks like you are trying to build Yosys without the config defines set.          When building Yosys with a custom make system, make sure you set all the          defines the Yosys Makefile would set for your build configuration.
+    # [build] #  error It looks like you are trying to build Yosys without the config defines set. \
+    _YOSYS_
 )
