@@ -48,6 +48,7 @@ class Gate {
  */
 // TODO better parser; at least use https://abseil.io/docs/cpp/guides/strings
 // for comparison etc
+// or use lorina?
 Gate ParseGateLine(const std::string_view &gate_line,
                    const std::unordered_set<std::string_view> &inputs_set,
                    CircuitData *circuit_data) {
@@ -236,6 +237,8 @@ void BlifParser::ParseBuffer(const std::string &blif_buffer, bool zero) {
 
   // First line
   // expected : .model main
+  // TODO technically we only care about ".model"; "main" is making the parser
+  // less flexible for no good reason
   if (lines[0] != ".model main") {
     throw std::runtime_error("BlifParser::Parse : invalid .model");
   }

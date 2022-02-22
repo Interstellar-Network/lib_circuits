@@ -1,7 +1,11 @@
 #include "verilog_compiler.h"
 
-#include "absl/strings/str_cat.h"
-#include "kernel/yosys.h"
+#include <absl/strings/str_cat.h>
+#include <absl/strings/str_join.h>
+#include <glog/logging.h>
+#include <kernel/yosys.h>
+
+#include "resources.h"
 
 /**
  * Yosys has no erro handling, or exception...
@@ -36,13 +40,14 @@ class FilterErrorStreamBuf : public std::streambuf {
  private:
   // TODO proper logging
   void Error(const std::string &message) {
-    std::cout << "FilterErrorStreamBuf : Error : " << message;
-    throw std::runtime_error(std::string("FilterErrorStreamBuf : ") + message);
+    auto msg = absl::StrCat("FilterErrorStreamBuf : Error : ", message);
+    LOG(ERROR) << msg;
+    throw std::runtime_error(msg);
   }
 
   // TODO proper logging
   void Warning(const std::string &message) {
-    std::cout << "FilterErrorStreamBuf : Warning : " << message;
+    LOG(WARNING) << absl::StrCat("FilterErrorStreamBuf : Warning : ", message);
   }
 };
 
@@ -63,16 +68,22 @@ static void yosys_setup() {
   // yosys_celltypes.setup();
 
   Yosys::log_push();
+
+  // TODO provide the techmap.v ourself that way the one in /usr/share/yosys
+  // will not be used ? FAIL: see below "Found control character or space"
+  // TODO at least avoid harcoding the path(use resources.h)
+  Yosys::yosys_share_dirname =
+      absl::StrCat(interstellar::data_dir, "/verilog/");
 }
 
 namespace interstellar {
 
-namespace YosysHelper {
+namespace VerilogHelper {
 
 // TODO use low-level yosys functions :
 // - add error handling
 // - avoid parsing strings(a-la cli : args passed to yosys command via strings)
-void CompileVerilog(std::string_view input_v_full_path,
+void CompileVerilog(const std::vector<std::string_view> &inputs_v_full_paths,
                     std::string_view output_blif_full_path) {
   static bool is_setup = false;
 
@@ -96,9 +107,13 @@ void CompileVerilog(std::string_view input_v_full_path,
 
   Yosys::RTLIL::Design yosys_design;
 
+  // TODO? we could check if the files exist, are readable, etc BEFORE giving
+  // them to Yosys to have cleaner error handling
+
   // ~ Yosys::run_pass(read_verilog_cmd);
-  Yosys::Pass::call(&yosys_design,
-                    absl::StrCat("read_verilog ", input_v_full_path));
+  Yosys::Pass::call(
+      &yosys_design,
+      absl::StrCat("read_verilog ", absl::StrJoin(inputs_v_full_paths, " ")));
 
   // proc could be needed for segment2pixels, depending on the way/if the 0s are
   // run-length encoded in some way
@@ -106,6 +121,9 @@ void CompileVerilog(std::string_view input_v_full_path,
   // proc; etc (old size 2) techmap; opt;    real    0m2.573s user    0m2.441s
   // techmap;         real    0m2.060s user    0m1.906s
   // ~ Yosys::run_pass("techmap;");
+  // FAIL: -map verilog/techmap.v (copy pasted from installed /share/verilog)
+  // DOES NOT work "ERROR: Found control character or space (0x01) in string '\'
+  // which is not allowed in RTLIL identifiers"
   Yosys::Pass::call(&yosys_design, "techmap;");
 
   // ~ Yosys::run_pass(write_blif_cmd);
@@ -118,6 +136,6 @@ void CompileVerilog(std::string_view input_v_full_path,
   // Yosys::yosys_shutdown();
 }
 
-}  // namespace YosysHelper
+}  // namespace VerilogHelper
 
 }  // namespace interstellar

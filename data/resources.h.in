@@ -2,6 +2,6 @@
 
 namespace interstellar {
 
-char const constexpr *const data_dir = "@RESOURCE_DIR@";
+static char const constexpr *const data_dir = "@RESOURCE_DIR@";
 
 };

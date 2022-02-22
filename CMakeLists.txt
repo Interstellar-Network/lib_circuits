@@ -61,6 +61,7 @@ add_compile_options(
 
 include(3rd_party/abseil.cmake)
 include(3rd_party/fmt.cmake)
+include(3rd_party/glog.cmake)
 # include(3rd_party/lorina.cmake)  # TODO REMOVE
 # include(3rd_party/mockturle.cmake)
 include(3rd_party/xxhash.cmake)

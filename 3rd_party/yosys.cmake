@@ -67,6 +67,7 @@ ExternalProject_Add(yosys_ext
     SOURCE_DIR ${yosys_dl_SOURCE_DIR}
     UPDATE_DISCONNECTED ON
     # not needed; and causes eg "cp: cannot create regular file '/usr/local/bin/yosys': Permission denied"
+    # TODO "make install" should work with "PREFIX" in makefile.conf; in that case should probably remove LIBDIR and adjust IMPORTED_LOCATION
     INSTALL_COMMAND ""
     # https://github.com/YosysHQ/yosys#building-from-source
     CONFIGURE_COMMAND ""
@@ -90,7 +91,8 @@ ExternalProject_Add(yosys_ext
 file(GENERATE OUTPUT ${yosys_dl_SOURCE_DIR}/Makefile.conf CONTENT
     # TODO pass correct CXX flags(at least use the same warnings than CMake)
     # ENABLE_DEBUG: NOT ENOUGH, also needs "fno-limit-debug-info"
-    "ENABLE_LIBYOSYS := 1\nENABLE_ABC := 1\nLIBDIR := ${yosys_dl_SOURCE_DIR}\nENABLE_DEBUG := $<IF:$<CONFIG:Debug>,1,0>\n"
+    # TODO install; handle DATDIR ?
+    "ENABLE_LIBYOSYS := 1\nENABLE_ABC := 1\nLIBDIR := ${yosys_dl_SOURCE_DIR}\nENABLE_DEBUG := $<IF:$<CONFIG:Debug>,1,0>\nPREFIX := ${yosys_dl_BINARY_DIR}\n"
 )
 ExternalProject_Add_StepDependencies(yosys_ext build ${yosys_dl_SOURCE_DIR}/Makefile.conf)
 
