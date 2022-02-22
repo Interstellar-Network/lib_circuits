@@ -76,6 +76,15 @@ void WriteToFile(boost::filesystem::path path, std::string_view content) {
   DLOG(INFO) << "WriteToFile : written to : " << path.generic_string();
 }
 
+std::string ReadFile(boost::filesystem::path path) {
+  // TODO avoid useless string copy x2?
+  // TODO error handling
+  std::ifstream input_stream_v(path, std::ios_base::binary);
+  std::ostringstream sstr;
+  sstr << input_stream_v.rdbuf();
+  return sstr.str();
+}
+
 }  // namespace utils
 
 }  // namespace interstellar

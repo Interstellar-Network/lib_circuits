@@ -22,3 +22,8 @@ target_include_directories(utils_files
     # rather than utils_files.h directly
     ${CMAKE_CURRENT_SOURCE_DIR}/../..
 )
+
+target_compile_definitions(utils_files
+    # TODO should this be public? probabably yes b/c filesystem.hpp is included by the internal .h
+    PUBLIC BOOST_FILESYSTEM_NO_DEPRECATED
+)

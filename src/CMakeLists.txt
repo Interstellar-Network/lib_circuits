@@ -1,5 +1,6 @@
 ################################################################################
 
+add_subdirectory(abc_wrapper)
 add_subdirectory(segments2pixels)
 add_subdirectory(verilog)
 add_subdirectory(utils/files/)
@@ -21,6 +22,7 @@ target_link_libraries(circuit_lib
     xxhash
     absl::strings
 
+    abc-wrapper
     segments2pixels
     verilog_compiler
     resources

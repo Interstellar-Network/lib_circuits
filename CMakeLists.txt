@@ -45,6 +45,8 @@ endif()
 # set the compile flags BEFORE adding any internal lib/exe
 # [but possibly AFTER any external 3rd party deps b/c they MAY NOT compile with
 # all warnings]
+# NOTE: apparently include vs add_compile_options order does NOT matter
+# b/c CMake will "include+configure" THEN compile
 
 add_compile_options(
     -march=native
@@ -59,6 +61,7 @@ add_compile_options(
 
 ################################################################################
 
+include(3rd_party/abc.cmake)
 include(3rd_party/abseil.cmake)
 include(3rd_party/fmt.cmake)
 include(3rd_party/glog.cmake)

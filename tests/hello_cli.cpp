@@ -51,17 +51,6 @@ void ProcessDefines(std::string* str_v) {
 // TODO for dev/debug?
 // https://github.com/hriener/lorina/blob/e05e81df2a8c0317739875795fab00d26a4bc264/test/verilog.cpp
 
-std::string ReadVerilogFromDataDir(const std::string& v_file_name) {
-  // TODO avoid useless string copy x2?
-  // TODO error handling
-  auto v_path =
-      std::filesystem::path(interstellar::data_dir) / "verilog" / v_file_name;
-  std::ifstream input_stream_v(v_path, std::ios_base::binary);
-  std::ostringstream sstr;
-  sstr << input_stream_v.rdbuf() << "\n";
-  return sstr.str();
-}
-
 int main() {
   // concat all the data/verilog/*.v into this tmpfile
   // TODO use /tmp + unique name

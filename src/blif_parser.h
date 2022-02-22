@@ -42,16 +42,7 @@ class BlifParser {
   // TODO handle the '-z' option, see lib_python
   // TODO return a struct/class
   // TODO string_view
-  void ParseBuffer(const std::string &blif_buffer, bool zero);
-
-  /**
-   * Public because tests
-   */
-  // ARCHIVE kept for reference
-  // Now using the BlifParser instance directly, without writing an intermediate
-  // .skcd
-  std::string SerializeToBuffer(
-      const std::map<std::string, uint32_t> &config) const;
+  void ParseBuffer(std::string_view blif_buffer, bool zero);
 
   unsigned int Getn() const { return n_; }
 
@@ -77,9 +68,6 @@ class BlifParser {
  private:
   // Basic deps injection to use a fake PRNG during tests
   std::shared_ptr<RandomInterface> random_;
-
-  // magic version number
-  unsigned int v_ = 0x534b4330;  // ascii for 'SKC0'
 
   unsigned int n_ = 0;  // inputs number
   unsigned int m_ = 0;  // outputs number

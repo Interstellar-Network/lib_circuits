@@ -29,6 +29,8 @@ class TempDir {
 
 void WriteToFile(boost::filesystem::path path, std::string_view content);
 
+std::string ReadFile(boost::filesystem::path path);
+
 }  // namespace utils
 
 }  // namespace interstellar

@@ -38,14 +38,12 @@ class FilterErrorStreamBuf : public std::streambuf {
   };
 
  private:
-  // TODO proper logging
   void Error(const std::string &message) {
     auto msg = absl::StrCat("FilterErrorStreamBuf : Error : ", message);
     LOG(ERROR) << msg;
     throw std::runtime_error(msg);
   }
 
-  // TODO proper logging
   void Warning(const std::string &message) {
     LOG(WARNING) << absl::StrCat("FilterErrorStreamBuf : Warning : ", message);
   }
@@ -54,7 +52,28 @@ class FilterErrorStreamBuf : public std::streambuf {
 /**
  * see Yosys sources
  */
+// TODO(yosys) remove call to Yosys::yosys_setup and do only what is strictly
+// needed
 static void yosys_setup() {
+  // TODO provide the techmap.v ourself that way the one in /usr/share/yosys
+  // will not be used ? FAIL: see below "Found control character or space"
+  // TODO at least avoid harcoding the path(use resources.h)
+  // Yosys::yosys_share_dirname =
+  //     absl::StrCat(interstellar::data_dir, "/verilog/");
+  //
+  // 7.1. Executing Verilog-2005 frontend:
+  // .../build/_deps/yosys_dl-src/share/techmap.v
+  // Parsing Verilog input from `.../build/_deps/yosys_dl-src/share/techmap.v'
+  // to AST representation
+  //
+  // MUST be before init_share_dirname(called by Yosys::yosys_setup)
+  Yosys::yosys_share_dirname =
+      "/home/pratn/Documents/interstellar/lib_circuits/build/_deps/"
+      "yosys_dl-src/share/";
+
+#if 1
+  Yosys::yosys_setup();
+#else
   // "if there are already IdString objects then we have a global initialization
   // order bug"
   Yosys::IdString empty_id;
@@ -68,12 +87,7 @@ static void yosys_setup() {
   // yosys_celltypes.setup();
 
   Yosys::log_push();
-
-  // TODO provide the techmap.v ourself that way the one in /usr/share/yosys
-  // will not be used ? FAIL: see below "Found control character or space"
-  // TODO at least avoid harcoding the path(use resources.h)
-  Yosys::yosys_share_dirname =
-      absl::StrCat(interstellar::data_dir, "/verilog/");
+#endif
 }
 
 namespace interstellar {
@@ -110,23 +124,31 @@ void CompileVerilog(const std::vector<std::string_view> &inputs_v_full_paths,
   // TODO? we could check if the files exist, are readable, etc BEFORE giving
   // them to Yosys to have cleaner error handling
 
-  // ~ Yosys::run_pass(read_verilog_cmd);
+  // TODO use Yosys::run_pass(read_verilog_cmd) everywhere?
   Yosys::Pass::call(
       &yosys_design,
       absl::StrCat("read_verilog ", absl::StrJoin(inputs_v_full_paths, " ")));
+
+  // TODO?
+  Yosys::Pass::call(&yosys_design, "proc");
+  // Yosys::Pass::call(&yosys_design, "synth");
+  Yosys::Pass::call(&yosys_design, "techmap");
+
+  // TODO abc ?
+  // "Note that this is a logic optimization pass within Yosys that is calling
+  // ABC internally. This is not going to "run ABC on your design". It will
+  // instead run ABC on logic snippets extracted from your design. You will not
+  // get any useful output when passing an ABC script that writes a file.
+  // Instead write your full design as BLIF file with write_blif and the load
+  // that into ABC externally if you want to use ABC to convert your design into
+  // another format."
 
   // proc could be needed for segment2pixels, depending on the way/if the 0s are
   // run-length encoded in some way
   // TODO test and bench(including circuit_size and eval speed): techmap; opt;
   // proc; etc (old size 2) techmap; opt;    real    0m2.573s user    0m2.441s
   // techmap;         real    0m2.060s user    0m1.906s
-  // ~ Yosys::run_pass("techmap;");
-  // FAIL: -map verilog/techmap.v (copy pasted from installed /share/verilog)
-  // DOES NOT work "ERROR: Found control character or space (0x01) in string '\'
-  // which is not allowed in RTLIL identifiers"
-  Yosys::Pass::call(&yosys_design, "techmap;");
 
-  // ~ Yosys::run_pass(write_blif_cmd);
   Yosys::Pass::call(&yosys_design,
                     absl::StrCat("write_blif ", output_blif_full_path));
 

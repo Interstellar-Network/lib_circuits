@@ -52,7 +52,8 @@ class Gate {
 Gate ParseGateLine(const std::string_view &gate_line,
                    const std::unordered_set<std::string_view> &inputs_set,
                    CircuitData *circuit_data) {
-  std::vector<std::string_view> gate_vect = absl::StrSplit(gate_line, ' ');
+  std::vector<std::string_view> gate_vect =
+      absl::StrSplit(gate_line, ' ', absl::SkipEmpty());
 
   assert(gate_vect[0] == ".gate");  // NOT a .gate line
 
@@ -117,23 +118,27 @@ Gate ParseGateLine(const std::string_view &gate_line,
     // In pratice this is the two kind of gate remaining to parse:
     // '.gate ZERO O=pix[18286]'(A LOT of them)
     // '.gate INV  a=z O=n29793'(only one)
-    assert(
-        (gate.type == SkcdGateType::ZERO || gate.type == SkcdGateType::INV) &&
-        "ParseGateLine: unexpected: not a ZERO or INV!");
+    // '.gate BUF  a=pix[186] O=pix[194]'
+    assert((gate.type == SkcdGateType::ZERO || gate.type == SkcdGateType::INV ||
+            gate.type == SkcdGateType::BUF) &&
+           "ParseGateLine: unexpected: not a ZERO or INV!");
     if (gate.type == SkcdGateType::ZERO) {
       // ZERO gates are transformed into XOR(__dummy0, __dummy0)
       // Which are two ROOT inputs
       gate.layer = GateLayer::ROOT;
-    } else {
+    } else if ((gate.type == SkcdGateType::INV) ||
+               (gate.type == SkcdGateType::BUF)) {
       // INV gates are transformed into XOR(a, __dummy1)
       // So either 'a' is a ROOT input which makes the gate ROOT,
       // or 'a' is INTERMEDIATE, which the the gate INTERMEDIATE
-      assert(!gate.a.empty() && "INV gate without 'a' set!");
+      assert(!gate.a.empty() && "INV/BUF gate without 'a' set!");
       if (inputs_set.find(gate.a) != end) {
         gate.layer = GateLayer::ROOT;
       } else {
         gate.layer = GateLayer::INTERMEDIATE;
       }
+    } else {
+      assert("SHOULD NOT BE HERE");
     }
   }
 
@@ -154,7 +159,7 @@ Gate ParseGateLine(const std::string_view &gate_line,
  */
 // TODO handle the '-z' option, see lib_python
 // TODO return a struct/class
-void BlifParser::ParseBuffer(const std::string &blif_buffer, bool zero) {
+void BlifParser::ParseBuffer(std::string_view blif_buffer, bool zero) {
   assert(zero && "BlifParser: only 'zero'(=-z flag) is supported!");
 
   std::vector<std::string_view> lines;
@@ -169,11 +174,8 @@ void BlifParser::ParseBuffer(const std::string &blif_buffer, bool zero) {
   std::stack<std::unique_ptr<std::string>> continuation_buffers;
 
   {
-    // std::istringstream blif_ss(blif_buffer);
-    std::string_view blif_sv{blif_buffer.c_str(), blif_buffer.size()};
-
     std::vector<std::string_view> blif_lines_raw =
-        absl::StrSplit(blif_sv, '\n');
+        absl::StrSplit(blif_buffer, '\n');
 
     // Pre-processing
     // - remove comments
@@ -195,13 +197,14 @@ void BlifParser::ParseBuffer(const std::string &blif_buffer, bool zero) {
         continue;
       }
 
-      if (line.at(0) == '#') {
+      if (absl::StartsWith(line, "#")) {
         // comment : skip
         // NOTE: only handles a "header" comment, but we don't need more
         continue;
       }
 
-      if (line.at(line_length - 1) == '\\') {
+      // if a line ends with "\", concat with the next one
+      if (absl::EndsWith(line, "\\")) {
         *line_with_continuation += line.substr(0, line_length - 2);
 
         if (handling_continuation) {
