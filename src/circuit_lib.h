@@ -1,12 +1,12 @@
 #pragma once
 
-#include "skcd.h"
+#include <boost/filesystem.hpp>
 
 namespace interstellar {
 
 namespace CircuitPipeline {
 
-Skcd GenerateSkcd();
+void GenerateSkcd(boost::filesystem::path skcd_output_path);
 
 }  // namespace CircuitPipeline
 

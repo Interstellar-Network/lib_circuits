@@ -3,6 +3,7 @@
 #include <absl/strings/str_cat.h>
 
 #include "abc_wrapper/abc_wrapper.h"
+#include "blif_parser.h"
 #include "resources.h"
 #include "segments2pixels/segments2pixels.h"
 #include "utils/files/utils_files.h"
@@ -14,7 +15,7 @@ namespace CircuitPipeline {
 
 // TODO how to handle InitGoogleLogging ?
 
-Skcd GenerateSkcd() {
+void GenerateSkcd(boost::filesystem::path skcd_output_path) {
   // [1] generate Verilog segments2pixels.v
   auto segment2pixels = Segments2Pixels(42, 42);
   auto segment2pixels_v_str = segment2pixels.GenerateVerilog();
@@ -33,7 +34,7 @@ Skcd GenerateSkcd() {
           // TODO define.v: generate dynamically and write to file(ideally
           // generate using a ref to Segments2Pixels)
           absl::StrCat(interstellar::data_dir,
-                       "/verilog/generated/pinpad-define.v"),
+                       "/verilog/generated/message-define.v"),
           segments2pixels_v_path.generic_string(),
           absl::StrCat(interstellar::data_dir, "/verilog/rndswitch.v"),
           absl::StrCat(interstellar::data_dir, "/verilog/xorexpand.v"),
@@ -50,13 +51,15 @@ Skcd GenerateSkcd() {
   interstellar::ABC::Run(output_blif_path.generic_string(),
                          final_blif_blif_path);
 
-  // convert .blif.blif -> .skcd
+  // convert .blif.blif -> ~.skcd
+  // NOTE: Skcd class was previously used to pass the data around, but it has
+  // been replaced by protobuf serialization
   auto blif_parser = BlifParser();
   auto tmp_blif_blif_str = utils::ReadFile(final_blif_blif_path);
   blif_parser.ParseBuffer(tmp_blif_blif_str, true);
 
   // [?]
-  return Skcd(std::move(blif_parser));
+  utils::WriteToFile(skcd_output_path, "TODO");
 }
 
 }  // namespace CircuitPipeline

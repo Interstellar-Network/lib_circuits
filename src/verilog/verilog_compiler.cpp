@@ -130,9 +130,17 @@ void CompileVerilog(const std::vector<std::string_view> &inputs_v_full_paths,
       absl::StrCat("read_verilog ", absl::StrJoin(inputs_v_full_paths, " ")));
 
   // TODO?
-  Yosys::Pass::call(&yosys_design, "proc");
+  // https://stackoverflow.com/questions/31434380/what-is-a-good-template-yosys-synthesis-script
+  // Yosys::Pass::call(&yosys_design, "proc");
+  // Yosys::Pass::call(&yosys_design, "opt");
   // Yosys::Pass::call(&yosys_design, "synth");
-  Yosys::Pass::call(&yosys_design, "techmap");
+  // Yosys::Pass::call(&yosys_design, "opt");
+  // Yosys::Pass::call(&yosys_design, "techmap");
+  // Yosys::Pass::call(&yosys_design, "opt");
+
+  Yosys::Pass::call(&yosys_design, "synth -noabc");
+  // Yosys::Pass::call(&yosys_design, "abc");
+  Yosys::Pass::call(&yosys_design, "clean");
 
   // TODO abc ?
   // "Note that this is a logic optimization pass within Yosys that is calling

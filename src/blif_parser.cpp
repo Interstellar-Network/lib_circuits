@@ -1,6 +1,7 @@
 
 #include "blif_parser.h"
 
+#include <absl/strings/str_cat.h>
 #include <absl/strings/str_split.h>
 #include <fmt/format.h>
 #include <xxhash.h>
@@ -49,13 +50,15 @@ class Gate {
 // TODO better parser; at least use https://abseil.io/docs/cpp/guides/strings
 // for comparison etc
 // or use lorina?
-Gate ParseGateLine(const std::string_view &gate_line,
+Gate ParseGateLine(std::string_view gate_line,
                    const std::unordered_set<std::string_view> &inputs_set,
                    CircuitData *circuit_data) {
   std::vector<std::string_view> gate_vect =
       absl::StrSplit(gate_line, ' ', absl::SkipEmpty());
 
-  assert(gate_vect[0] == ".gate");  // NOT a .gate line
+  if (gate_vect[0] != ".gate") {
+    throw std::runtime_error("BlifParser: NOT a .gate line!");
+  }
 
   Gate gate;
 
@@ -71,9 +74,11 @@ Gate ParseGateLine(const std::string_view &gate_line,
   // we have already processed [0](ie ".gate"), and [1](ie the gate type)
   for (unsigned int i = 2; i < gate_vect_size; i++) {
     // eg: a=z, b=rnd[0], O=n249
-    const std::string_view &sub_gate = gate_vect[i];
+    std::string_view sub_gate = gate_vect[i];
 
-    assert(sub_gate[1] == '=');  // invalid token
+    if (sub_gate[1] != '=') {
+      throw std::runtime_error("BlifParser: invalid token!");
+    }
 
     // eg O=pix[83276]  --> sub_gate_name_copy = pix[83276]
     // TODO(string_view) remove string copy
@@ -114,37 +119,44 @@ Gate ParseGateLine(const std::string_view &gate_line,
     else {
       gate.layer = GateLayer::SECOND;
     }
-  } else {
-    // In pratice this is the two kind of gate remaining to parse:
+    // In pratice this is the kind of gates remaining to parse:
     // '.gate ZERO O=pix[18286]'(A LOT of them)
     // '.gate INV  a=z O=n29793'(only one)
     // '.gate BUF  a=pix[186] O=pix[194]'
-    assert((gate.type == SkcdGateType::ZERO || gate.type == SkcdGateType::INV ||
-            gate.type == SkcdGateType::BUF) &&
-           "ParseGateLine: unexpected: not a ZERO or INV!");
-    if (gate.type == SkcdGateType::ZERO) {
-      // ZERO gates are transformed into XOR(__dummy0, __dummy0)
-      // Which are two ROOT inputs
-      gate.layer = GateLayer::ROOT;
-    } else if ((gate.type == SkcdGateType::INV) ||
-               (gate.type == SkcdGateType::BUF)) {
-      // INV gates are transformed into XOR(a, __dummy1)
-      // So either 'a' is a ROOT input which makes the gate ROOT,
-      // or 'a' is INTERMEDIATE, which the the gate INTERMEDIATE
-      assert(!gate.a.empty() && "INV/BUF gate without 'a' set!");
-      if (inputs_set.find(gate.a) != end) {
-        gate.layer = GateLayer::ROOT;
-      } else {
-        gate.layer = GateLayer::INTERMEDIATE;
-      }
-    } else {
-      assert("SHOULD NOT BE HERE");
+  } else if (gate.type == SkcdGateType::ZERO) {
+    // ZERO gates are transformed into XOR(__dummy0, __dummy0)
+    // Which are two ROOT inputs
+    gate.layer = GateLayer::ROOT;
+  } else if ((gate.type == SkcdGateType::INV) ||
+             (gate.type == SkcdGateType::BUF)) {
+    // INV gates are transformed into XOR(a, __dummy1)
+    // So either 'a' is a ROOT input which makes the gate ROOT,
+    // or 'a' is INTERMEDIATE, which the the gate INTERMEDIATE
+    //
+    // TODO BUF gates are to be duplicated; or O = BUF(A) <=> O = __dummy0 XOR A
+    // ? eg old Yosys/ABC: .gate XOR  a=n1571 b=n1569 O=pix[186] .gate XOR
+    // a=n1571 b=n1569 O=pix[194] new Yosys/ABC: .gate XOR  a=new_n1571_
+    // b=new_n1569_ O=pix[186] .gate BUF  a=pix[186] O=pix[194]
+    // -> we pick a's layer + 1 as the current layer
+    if (gate.a.empty()) {
+      // NOTE: could be a BUFB/INVB gate; ie the same but with only b input
+      // instead of a
+      throw std::runtime_error("INV/BUF gate without 'a' set!");
     }
+    if (inputs_set.find(gate.a) != end) {
+      gate.layer = GateLayer::ROOT;
+    } else {
+      gate.layer = GateLayer::INTERMEDIATE;
+    }
+  } else {
+    throw std::runtime_error(
+        absl::StrCat("Unknown gate type found : ", gate_line));
   }
 
   // update the layer's count
-  assert(static_cast<uint8_t>(gate.layer) < circuit_data->layer_count.size() &&
-         "ParseGateLine: gate.layer: out of range!");
+  if (static_cast<uint8_t>(gate.layer) > circuit_data->layer_count.size()) {
+    throw std::runtime_error("ParseGateLine: gate.layer: out of range!");
+  }
   circuit_data->layer_count[static_cast<uint8_t>(gate.layer)]++;
 
   return gate;
@@ -160,7 +172,9 @@ Gate ParseGateLine(const std::string_view &gate_line,
 // TODO handle the '-z' option, see lib_python
 // TODO return a struct/class
 void BlifParser::ParseBuffer(std::string_view blif_buffer, bool zero) {
-  assert(zero && "BlifParser: only 'zero'(=-z flag) is supported!");
+  if (!zero) {
+    throw std::runtime_error("BlifParser: only 'zero'(=-z flag) is supported!");
+  }
 
   std::vector<std::string_view> lines;
 
@@ -379,7 +393,9 @@ void BlifParser::ParseBuffer(std::string_view blif_buffer, bool zero) {
   // For later use(ie garbling) we also compute the min/max of the gate inputs
   // and gate outputs
   for (auto &gate : gates_vect) {
-    assert(gate.o.length());  // gate's O not set
+    if (!gate.o.length()) {
+      throw std::runtime_error("gate's O not set");
+    }
 
     // contrary to 'O', a & b are optionnal
     if (!gate.a.empty()) {
@@ -440,12 +456,13 @@ void BlifParser::ParseBuffer(std::string_view blif_buffer, bool zero) {
         }
 
       } else if (gate.type == SkcdGateType::BUF) {
-        // "replace BUF by XOR(a, __dummy0)=a"
+        // see comment "BUF gates are to be duplicated" above
+        // replace BUF gate are to be duplicated by or O = BUF(A) <=> O =
+        // __dummy0 XOR A
         GT_[q_] = SkcdGateType::XOR;
 
         unsigned int random_choice = random_->choice(pool0);
         B_[q_] = random_choice;
-
       } else if (gate.type == SkcdGateType::INV) {
         // "replace INV by XOR(a, __dummy1)=not a"
         GT_[q_] = SkcdGateType::XOR;
@@ -464,6 +481,9 @@ void BlifParser::ParseBuffer(std::string_view blif_buffer, bool zero) {
     O_.push_back(GetLabel(output));
   }
 
+  // CHECK: the various vectors were NOT resized
+  // NOTE: resizing is a performance concern; but it WOULD still work so this is
+  // just asserts not throws
   assert(A_.size() == size_to_reserve && "BlifParser: A was resized!");
   assert(B_.size() == size_to_reserve && "BlifParser: B was resized!");
   assert(GO_.size() == size_to_reserve && "BlifParser: GO was resized!");
@@ -522,8 +542,9 @@ uint32_t BlifParser::GetLabel(std::string_view lbl) {
   return number
   */
   labels_map_.insert(std::pair<uint64_t, size_t>(lbl_hash, labels_map_.size()));
-  assert(labels_map_.size() < std::numeric_limits<uint32_t>::max() &&
-         "BlifParser: label does not fit on 32 bits!");
+  if (labels_map_.size() > std::numeric_limits<uint32_t>::max()) {
+    throw std::runtime_error("BlifParser: label does not fit on 32 bits!");
+  }
   return labels_map_.size() - 1;
 }
 

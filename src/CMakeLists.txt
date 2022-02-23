@@ -10,7 +10,6 @@ add_subdirectory(utils/files/)
 add_library(circuit_lib
     blif_parser.cpp
     circuit_lib.cpp
-    skcd.cpp
     # TODO move to separate libs, and under utils/
     utils_noncopyable.cpp
 )
