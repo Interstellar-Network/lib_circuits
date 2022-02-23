@@ -7,7 +7,7 @@ From lib_python/lib_python/gen_skcd/skcd.py
 
 NOTE: there is already a class GateType in ABC
 */
-enum class SkcdGateType : unsigned int {
+enum class SkcdGateType : u_int8_t {
   ZERO,
   NOR,
   AANB,

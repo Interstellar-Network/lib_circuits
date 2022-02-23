@@ -53,15 +53,15 @@ class BlifParser {
   // WARNING: the functions below return REF on the internal vectors;
   // They are used when constructing the Skcd, by move so ref is fine.
 
-  std::vector<unsigned int> &GetA() { return A_; }
+  const std::vector<unsigned int> &GetA() const { return A_; }
 
-  std::vector<unsigned int> &GetB() { return B_; }
+  const std::vector<unsigned int> &GetB() const { return B_; }
 
-  std::vector<unsigned int> &GetGO() { return GO_; }
+  const std::vector<unsigned int> &GetGO() const { return GO_; }
 
-  std::vector<SkcdGateType> &GetGT() { return GT_; }
+  const std::vector<SkcdGateType> &GetGT() const { return GT_; }
 
-  std::vector<unsigned int> &GetO() { return O_; }
+  const std::vector<unsigned int> &GetO() const { return O_; }
 
   CircuitData &GetCircuitData() { return circuit_data_; }
 
