@@ -1,6 +1,6 @@
 include(FetchContent)
 FetchContent_Declare(
-  protobuf
+  protobuf_fetch
   GIT_REPOSITORY https://github.com/protocolbuffers/protobuf.git
   GIT_TAG v3.19.4
   SOURCE_SUBDIR cmake
@@ -15,4 +15,4 @@ option(protobuf_BUILD_LIBPROTOC "Build libprotoc" OFF)
 option(protobuf_DISABLE_RTTI "Remove runtime type information in the binaries" OFF)
 option(protobuf_WITH_ZLIB "Build with zlib support" OFF)  # default ON
 
-FetchContent_MakeAvailable(protobuf)
+FetchContent_MakeAvailable(protobuf_fetch)

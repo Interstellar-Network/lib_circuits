@@ -4,11 +4,12 @@ add_subdirectory(abc_wrapper)
 add_subdirectory(segments2pixels)
 add_subdirectory(verilog)
 add_subdirectory(utils/files/)
+add_subdirectory(blif)
+add_subdirectory(skcd)
 
 ################################################################################
 
 add_library(circuit_lib
-    blif_parser.cpp
     circuit_lib.cpp
     # TODO move to separate libs, and under utils/
     utils_noncopyable.cpp
@@ -17,15 +18,13 @@ add_library(circuit_lib
 target_link_libraries(circuit_lib
     PRIVATE
     # mockturtle # TODO?
-    fmt
-    xxhash
     absl::strings
 
     abc-wrapper
     segments2pixels
     verilog_compiler
     resources
-    utils_files
+    skcd
 )
 
 target_include_directories(circuit_lib

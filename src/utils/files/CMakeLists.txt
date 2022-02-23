@@ -11,9 +11,12 @@ add_library(utils_files
 target_link_libraries(utils_files
     PRIVATE
     glog::glog
-    ${Boost_FILESYSTEM_LIBRARY}
     absl::strings
     absl::random_random
+
+    PUBLIC
+    # public that way linking with utils_file and #include "utils_file.h" will "just work"
+    ${Boost_FILESYSTEM_LIBRARY}
 )
 
 target_include_directories(utils_files

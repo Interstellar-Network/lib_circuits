@@ -71,6 +71,8 @@ include(3rd_party/protobuf.cmake)
 include(3rd_party/xxhash.cmake)
 include(3rd_party/yosys.cmake) # TODO REMOVE ? if possible: use lorina+mockturtle instead?
 
+include(deps/protos.cmake)
+
 ################################################################################
 
 # will embed all the .v,.png,etc.

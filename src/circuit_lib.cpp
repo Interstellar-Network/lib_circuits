@@ -3,9 +3,10 @@
 #include <absl/strings/str_cat.h>
 
 #include "abc_wrapper/abc_wrapper.h"
-#include "blif_parser.h"
+#include "blif/blif_parser.h"
 #include "resources.h"
 #include "segments2pixels/segments2pixels.h"
+#include "skcd/skcd.h"
 #include "utils/files/utils_files.h"
 #include "verilog/verilog_compiler.h"
 
@@ -59,7 +60,7 @@ void GenerateSkcd(boost::filesystem::path skcd_output_path) {
   blif_parser.ParseBuffer(tmp_blif_blif_str, true);
 
   // [?]
-  utils::WriteToFile(skcd_output_path, "TODO");
+  interstellar::skcd::WriteToFile(skcd_output_path, blif_parser);
 }
 
 }  // namespace CircuitPipeline
