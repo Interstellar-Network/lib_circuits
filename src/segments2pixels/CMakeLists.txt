@@ -1,12 +1,14 @@
+find_package(PNG REQUIRED)
+
 add_library(segments2pixels
     segments2pixels.cpp
 )
 
 target_link_libraries(segments2pixels
     PRIVATE
-    lodepng
+    PNG::PNG
     cimg
-    X11
+    X11 # TODO remove
     absl::strings
 
     resources
