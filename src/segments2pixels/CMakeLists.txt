@@ -4,7 +4,13 @@ add_library(segments2pixels
 
 target_link_libraries(segments2pixels
     PRIVATE
+    lodepng
+    cimg
+    X11
+    absl::strings
+
     resources
+    utils_files
 )
 
 target_include_directories(segments2pixels

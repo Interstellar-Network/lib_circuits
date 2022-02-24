@@ -134,9 +134,12 @@ Gate ParseGateLine(std::string_view gate_line,
     // or 'a' is INTERMEDIATE, which the the gate INTERMEDIATE
     //
     // TODO BUF gates are to be duplicated; or O = BUF(A) <=> O = __dummy0 XOR A
-    // ? eg old Yosys/ABC: .gate XOR  a=n1571 b=n1569 O=pix[186] .gate XOR
-    // a=n1571 b=n1569 O=pix[194] new Yosys/ABC: .gate XOR  a=new_n1571_
-    // b=new_n1569_ O=pix[186] .gate BUF  a=pix[186] O=pix[194]
+    // eg old Yosys/ABC:
+    // .gate XOR  a=n1571 b=n1569 O=pix[186]
+    // .gate XOR a=n1571 b=n1569 O=pix[194]
+    // new Yosys/ABC:
+    // .gate XOR  a=new_n1571_ b=new_n1569_ O=pix[186]
+    // .gate BUF  a=pix[186] O=pix[194]
     // -> we pick a's layer + 1 as the current layer
     if (gate.a.empty()) {
       // NOTE: could be a BUFB/INVB gate; ie the same but with only b input

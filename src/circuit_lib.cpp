@@ -16,9 +16,10 @@ namespace CircuitPipeline {
 
 // TODO how to handle InitGoogleLogging ?
 
-void GenerateSkcd(boost::filesystem::path skcd_output_path) {
+void GenerateSkcd(boost::filesystem::path skcd_output_path, u_int32_t width,
+                  u_int32_t height) {
   // [1] generate Verilog segments2pixels.v
-  auto segment2pixels = Segments2Pixels(42, 42);
+  auto segment2pixels = Segments2Pixels(width, height);
   auto segment2pixels_v_str = segment2pixels.GenerateVerilog();
 
   auto tmp_dir = utils::TempDir();
