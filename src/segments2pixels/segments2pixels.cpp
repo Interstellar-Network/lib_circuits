@@ -7,79 +7,131 @@
 #define cimg_display 1
 #define cimg_use_png
 #include <CImg.h>
+#include <absl/hash/hash.h>
 #include <absl/strings/str_cat.h>
+#include <fmt/format.h>
 
 #include <algorithm>
 #include <filesystem>
+#include <limits>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "resources.h"
+#include "utils/encode_rle/encode_rle.h"
 #include "utils/files/utils_files.h"
-
-// TODO remove
-#if 0
-std::string ReadFromDataDir(boost::filesystem::path input_path) {
-  auto data_full_path =
-      boost::filesystem::path(interstellar::data_dir) / input_path;
-  return interstellar::utils::ReadFile(data_full_path);
-}
-
-std::vector<u_int8_t> ReadPng(boost::filesystem::path input_path,
-                              unsigned int *width, unsigned int *height) {
-  // TODO
-  // auto png_raw_str = ReadFromDataDir(input_path);
-  // // copy std::string -> vector<char>
-  // std::vector<u_int8_t> png_raw_data(png_raw_str.begin(), png_raw_str.end());
-  // assert(png_raw_data.size() == png_raw_str.size() && "wrong size!");
-
-  // cf
-  // https://github.com/lvandeve/lodepng/blob/master/examples/example_decode.cpp
-
-  std::vector<u_int8_t> png_pixels;  // "the raw pixels"
-
-  // decode
-  // TODO unsigned error = lodepng::decode(png_pixels, *width, *height,
-  // png_raw_data);
-  unsigned error = lodepng::decode(
-      png_pixels, *width, *height,
-      (boost::filesystem::path(interstellar::data_dir) / input_path)
-          .generic_string());
-  if (error) {
-    throw std::runtime_error(
-        absl::StrCat("lodepng::decode error : ", lodepng_error_text(error)));
-  }
-
-  return png_pixels;
-}
-#endif
 
 namespace interstellar {
 
+/**
+ * return a map {Color: segment ID} like
+ * {
+ *  #a31cb5: 0,
+ *  #b97118: 1,
+ * }
+ * (not using hex color coding but same idea)
+ */
+std::unordered_map<ColorRGBA, uint32_t, absl::Hash<ColorRGBA>>
+ImgListUniqueColors(const cimg_library::CImg<unsigned char>& img) {
+  auto width = img.width(), height = img.height();
+  // "wh	Precomputed offset, must be equal to width()*height(). "
+  auto wh = img.width() * img.height();
+  // "whd	Precomputed offset, must be equal to width()*height()*depth()."
+  auto whd = img.width() * img.height() * img.depth();
+
+  auto has_alpha = img.spectrum() == 4;
+
+  std::unordered_set<ColorRGBA, absl::Hash<ColorRGBA>> colors;
+  uint32_t nb_colors_found = 0;
+  std::unordered_map<ColorRGBA, uint32_t, absl::Hash<ColorRGBA>>
+      map_color_to_id;
+
+  for (int x = 0; x < width; ++x) {
+    for (int y = 0; y < height; ++y) {
+      // NOTE: z range is [0,depth() - 1)
+      auto r = img(x, y, 0, 0, wh, whd);
+      auto g = img(x, y, 0, 1, wh, whd);
+      auto b = img(x, y, 0, 2, wh, whd);
+      auto a = has_alpha ? img(x, y, 0, 3, wh, whd) : 0;
+
+      // skip background
+      if (r == 0 && g == 0 && b == 0) {
+        continue;
+      }
+
+      auto color = ColorRGBA(r, g, b, a);
+
+      // if we have a new color:
+      // - add it to the "known list"
+      // - assign it a unique ID
+      auto pair_it_bool =
+          colors.emplace(r, g, b, a);  // std::pair<iterator,bool>
+      if (pair_it_bool.second) {
+        // "true if insertion happened"
+        map_color_to_id.emplace(color, nb_colors_found);
+        nb_colors_found++;
+      }
+    }
+  }
+
+  return map_color_to_id;
+}
+
+// TODO optimize, we are looping on the img once, so we SHOULD RLE-encode then
+// and directly reuse the result here
+std::vector<utils::RLE_int8_t> ImgReplaceBitmapSegIDs(
+    const cimg_library::CImg<unsigned char>& img,
+    const std::unordered_map<ColorRGBA, uint32_t, absl::Hash<ColorRGBA>>&
+        map_color_to_id) {
+  auto width = img.width(), height = img.height();
+  // "wh	Precomputed offset, must be equal to width()*height(). "
+  auto wh = img.width() * img.height();
+  // "whd	Precomputed offset, must be equal to width()*height()*depth()."
+  auto whd = img.width() * img.height() * img.depth();
+
+  auto has_alpha = img.spectrum() == 4;
+
+  // CHECK that we indeed only need 32 bits for the segment IDs
+  if (map_color_to_id.size() >= std::numeric_limits<int8_t>::max()) {
+    throw std::runtime_error(
+        "bitmap_seg_ids too small; requires 16 bits or more!");
+  }
+  // signed b/c we use "-1" to mean "background"
+  std::vector<int8_t> bitmap_seg_ids;
+  bitmap_seg_ids.reserve(width * height);
+
+  for (int x = 0; x < width; ++x) {
+    for (int y = 0; y < height; ++y) {
+      // NOTE: z range is [0,depth() - 1)
+      auto r = img(x, y, 0, 0, wh, whd);
+      auto g = img(x, y, 0, 1, wh, whd);
+      auto b = img(x, y, 0, 2, wh, whd);
+      auto a = has_alpha ? img(x, y, 0, 3, wh, whd) : 0;
+
+      // shortcut for background: directly insert "-1"
+      if (r == 0 && g == 0 && b == 0) {
+        bitmap_seg_ids.emplace_back(-1);
+        continue;
+      }
+
+      auto color = ColorRGBA(r, g, b, a);
+
+      assert(map_color_to_id.at(color) < std::numeric_limits<int8_t>::max() &&
+             "Segment ID does not fit on 8 bits!");
+      bitmap_seg_ids.emplace_back(
+          static_cast<uint8_t>(map_color_to_id.at(color)));
+    }
+  }
+
+  assert(bitmap_seg_ids.size() == static_cast<size_t>(width * height) &&
+         "wrong size!");
+
+  return utils::compress_rle(bitmap_seg_ids);
+}
+
 Segments2Pixels::Segments2Pixels(uint32_t width, uint32_t height)
     : _width(width), _height(height) {
-  // TODO remove
-#if 0
-  // Load the .png from data/
-  // TODO make the png configurable via ctor
-  unsigned int png_width, png_height;
-  auto png_pixels = ReadPng("7segs.png", &png_width, &png_height);
-  printf("Segments2Pixels %d %d; %d %d", _width, _height, png_width,
-         png_height);
-
-  // Prepare the .png that will be "drawn" several times in the final display
-  // "Construct image with specified size and initialize pixel values from a
-  // memory buffer. " NOTE: using is_shared=True which means png_pixels's data
-  // is used directly!
-  auto png_img = cimg_library::CImg<unsigned char>(
-      png_pixels.data(), png_width, png_height,
-      /* size_z */ 1,
-      /* size_c = specturm = nb of channels */ 4,
-      // NOTE: shared=true + resize:
-      // CImg<unsigned char>::assign(): Invalid assignment request of shared
-      // instance from specified image (21,21,1,4).
-      /* is_shared */ false);
-  // assert(png_img.size() == png_pixels.size() && "wrong size!");
-#endif
   auto png_img = cimg_library::CImg<unsigned char>();
   png_img.load_png(
       (boost::filesystem::path(interstellar::data_dir) / "7segs.png").c_str());
@@ -97,7 +149,7 @@ Segments2Pixels::Segments2Pixels(uint32_t width, uint32_t height)
                            static_cast<float>(png_img.height());
   // TODO dynamic; eg based on how many we want to draw, and their desired size
   uint32_t png_desired_width =
-      std::min(_width / 2, static_cast<uint32_t>(png_img.width()) / 2);
+      _width / 5;  // a fifth of the width looks pretty nice
   uint32_t png_desired_height =
       static_cast<float>(png_desired_width) / png_aspect_ratio;
   png_img.resize(
@@ -111,6 +163,9 @@ Segments2Pixels::Segments2Pixels(uint32_t width, uint32_t height)
       /* centering_y = 0 */ 0,
       /* centering_z = 0 */ 0,
       /* centering_c = 0 */ 0);
+
+  assert(ImgListUniqueColors(png_img).size() == 7 &&
+         "Something went wrong? Should probably only have found 7 segments");
 
   // Prepare the display with the desired dimensions
   // MUST use ctor with "value" else
@@ -130,22 +185,106 @@ Segments2Pixels::Segments2Pixels(uint32_t width, uint32_t height)
          "wrong dimensions!");
 
   // Construct the final display by assembling the .png
+  // TODO move that into helper function that draw several digits where desired
+  auto horizontal_margin = (display_img.width() * 0.05);
+  auto offset_height = (display_img.height() - png_img.height()) / 2;
+  // NOTE: we use opacity to convert "unique in segs.png" to "globally unique"
+  // we could do it differently(i.e. more robustly) but this works just fine for
+  // now
+  // technically this limits to 255 segments in the final image b/c of opacity =
+  // ALPHA channel and that is [0-255] but this is more than we need for now
   display_img.draw_image(
-      /* x0 */ 0,
-      /* y0 */ 0,
+      /* x0 */ (display_img.width() / 2) - png_img.width() - horizontal_margin,
+      /* y0 */ offset_height,
       /* z0 */ 0,
       /* c0 */ 0,
       /* sprite */ png_img,
-      /* opacity */ 1);
+      /* opacity */ 1.0f);
+  display_img.draw_image(
+      /* x0 */ (display_img.width() / 2) + horizontal_margin,
+      /* y0 */ offset_height,
+      /* z0 */ 0,
+      /* c0 */ 0,
+      /* sprite */ png_img,
+      /* opacity */ 0.99f);
 
-  printf("bitmap : %lu", display_img.size());
+  std::unordered_map<ColorRGBA, uint32_t, absl::Hash<ColorRGBA>>
+      map_color_to_seg_id = ImgListUniqueColors(display_img);
+  _nb_segments = map_color_to_seg_id.size();
+  assert(_nb_segments == ImgListUniqueColors(png_img).size() * 2 &&
+         "Something went wrong? Should probably only have found 7*2 segments");
 
   display_img.display();  // TODO remove, and set correct define cimg_display,
                           // and remove -lX11
 
-  printf("bitmap : %lu", display_img.size());
+  // now prepare the final "bitmap"
+  // i.e. replace each color pixel by its corresponding segment ID
+  _bitmap_seg_ids_rle =
+      ImgReplaceBitmapSegIDs(display_img, map_color_to_seg_id);
 }
 
-std::string Segments2Pixels::GenerateVerilog() { return "TODO"; }
+std::string Segments2Pixels::GenerateVerilog() {
+  std::string verilog_buf;
+  unsigned int nb_inputs = _nb_segments - 1,
+               nb_outputs = (_width * _height) - 1;
+
+  // without reserve : 1657472 - 1771623 (ns)
+  // with reserve : 1250652 - 1356733 (ns)
+  // Now in the .v, ranges are encoded as eg: assign p[75295:75287] = 0;
+  // So we really do not need much memory.
+  unsigned int nb_pixels = _width * _height;
+  size_t size_to_reserve =
+      ((nb_pixels * strlen("assign p[000000] = s[0000];\n")) / 5) + 1000;
+  verilog_buf.reserve(size_to_reserve);
+
+  verilog_buf += "// module to convert segments into an image bitmap\n";
+  verilog_buf +=
+      "// generated by lib_circuits/src/segments2pixels/segments2pixels.cpp\n";
+  verilog_buf += "// (c) Interstellar\n\n";
+
+  verilog_buf += "module segment2pixel(s, p);  // convert segments to pixels\n";
+  // TODO
+  verilog_buf +=
+      fmt::format("input [{:d}:0] s; // segments to display\n", nb_inputs);
+  verilog_buf +=
+      fmt::format("output [{:d}:0] p;  // pixels output\n", nb_outputs);
+
+  // TODO proper values (decode RLE)
+  // TODO use absl or fmtlib
+  size_t pixels_counter = 0;
+  for (const auto& it : _bitmap_seg_ids_rle) {
+    // - OFF segment(seg_id==-1):   "assign p[10610:10609] = 0;"
+    // - ON segment(eg seg_id=16):  "assign p[17855:17854] = s[16];"
+    auto seg_id = it.value;
+    auto len = it.size;
+    if (seg_id == -1) {
+      // NOTE: range inverted! written as eg [7680:0] not [0:7680]
+      verilog_buf += "assign p[";
+      verilog_buf += fmt::format_int(pixels_counter + len - 1).str();
+      verilog_buf += ":";
+      verilog_buf += fmt::format_int(pixels_counter).str();
+      verilog_buf += "] = ";
+      verilog_buf += "0;\n";
+    } else {
+      // When a valid seg_id, we CAN NOT write eg "assign p[7456:7412] = s[14];"
+      // This is NOT valid verilog, apparently
+      // verilator --lint-only: "Operator ASSIGNW expects 47 bits on the Assign
+      // RHS, but Assign RHS's SEL generates 1 bits."
+      for (uint32_t j = pixels_counter; j < pixels_counter + len; ++j) {
+        verilog_buf += "assign p[";
+        verilog_buf += fmt::format_int(j).str();
+        verilog_buf += "] = ";
+        verilog_buf += "s[";
+        verilog_buf += fmt::format_int(seg_id).str();
+        verilog_buf += "];\n";
+      }
+    }
+    pixels_counter += len;
+  }
+
+  verilog_buf += "endmodule";
+
+  return verilog_buf;
+}
 
 }  // namespace interstellar

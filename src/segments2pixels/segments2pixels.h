@@ -2,7 +2,14 @@
 
 #include <string>
 
+#include "utils/encode_rle/rle.h"
+
 namespace interstellar {
+
+// TODO internal to the class?
+typedef std::tuple<u_int8_t /*r*/, u_int8_t /*g*/, u_int8_t /*b*/,
+                   u_int8_t /*a*/>
+    ColorRGBA;
 
 /**
  * Helper class that is the step [1] in circuit gen pipeline
@@ -28,7 +35,9 @@ class Segments2Pixels {
   std::string GenerateVerilog();
 
  private:
-  uint32_t _width, _height;
+  uint32_t _width, _height, _nb_segments;
+
+  std::vector<utils::RLE_int8_t> _bitmap_seg_ids_rle;
 };
 
 }  // namespace interstellar

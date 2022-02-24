@@ -10,9 +10,11 @@ target_link_libraries(segments2pixels
     cimg
     X11 # TODO remove
     absl::strings
+    fmt::fmt
 
     resources
     utils_files
+    utils_rle
 )
 
 target_include_directories(segments2pixels
