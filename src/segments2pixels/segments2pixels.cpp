@@ -287,4 +287,31 @@ std::string Segments2Pixels::GenerateVerilog() {
   return verilog_buf;
 }
 
+/**
+ * display-main.v and others expect eg:
+ *
+  `define WIDTH 56
+  `define HEIGHT 24
+  `define RNDSIZE 9
+  `define BITMAP_NB_SEGMENTS 28
+ */
+std::string Segments2Pixels::GetDefines() {
+  std::string defines_buf;
+
+  absl::StrAppend(&defines_buf, "`define WIDTH ", _width, "\n");
+  absl::StrAppend(&defines_buf, "`define HEIGHT ", _height, "\n");
+  absl::StrAppend(&defines_buf, "`define BITMAP_NB_SEGMENTS ", _nb_segments,
+                  "\n");
+  // RNDSIZE
+  // TODO Check
+  // Historically(before the support of variable otp_length), message had
+  // RNDSIZE=9, and pinpad RNDSIZE=16
+  // math.ceil(0.5 * math.sqrt(8 * otp_length * message_seg + 1) + 1)
+  auto rndsize = static_cast<unsigned int>(
+      std::max(std::ceil(0.5 * std::sqrt(8 * _nb_segments + 1) + 1), 9.));
+  absl::StrAppend(&defines_buf, "`define RNDSIZE ", rndsize, "\n");
+
+  return defines_buf;
+}
+
 }  // namespace interstellar

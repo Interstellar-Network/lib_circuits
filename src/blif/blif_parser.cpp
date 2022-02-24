@@ -251,10 +251,6 @@ void BlifParser::ParseBuffer(std::string_view blif_buffer, bool zero) {
     }
   }
 
-  size_t nb_lines = lines.size();
-
-  printf("parsed : %zu lines\n", nb_lines);
-
   // First line
   // expected : .model main
   // TODO technically we only care about ".model"; "main" is making the parser
@@ -506,6 +502,11 @@ void BlifParser::ParseBuffer(std::string_view blif_buffer, bool zero) {
   // gate_input_max + 1 b/c gate_input_max IS a valid input
   circuit_data_.input_gate_count.resize(circuit_data_.gate_input_max + 1, 0);
   for (uint32_t i = 0; i < q_; ++i) {
+    // TODO this FAIL if there are no input(eg when a circuit only has only ZERO
+    // gates); for now it does not matter but this parser is definitely not
+    // robust...
+    assert(A_[i] < circuit_data_.input_gate_count.size() && "out of range!");
+    assert(B_[i] < circuit_data_.input_gate_count.size() && "out of range!");
     circuit_data_.input_gate_count[A_[i]]++;
     circuit_data_.input_gate_count[B_[i]]++;
   }

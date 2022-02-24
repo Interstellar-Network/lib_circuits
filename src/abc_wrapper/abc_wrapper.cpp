@@ -86,6 +86,8 @@ void Run(std::string_view input_blif_path, std::string_view output_blif_path) {
   abc_wrapper.Execute("map -a");
 
   abc_wrapper.Execute(absl::StrCat("write ", output_blif_path));
+
+  LOG(INFO) << "wrote : " << output_blif_path;
 }
 
 }  // namespace ABC

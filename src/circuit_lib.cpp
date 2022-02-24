@@ -29,14 +29,17 @@ void GenerateSkcd(boost::filesystem::path skcd_output_path, u_int32_t width,
   auto segments2pixels_v_path = tmp_dir.GetPath() / "segments2pixels.v";
   utils::WriteToFile(segments2pixels_v_path, segment2pixels_v_str);
 
+  auto defines_v_str = segment2pixels.GetDefines();
+  // write this to defines.v (in the temp dir)
+  // because Yosys only handles files, not buffers
+  auto defines_v_path = tmp_dir.GetPath() / "defines.v";
+  utils::WriteToFile(defines_v_path, defines_v_str);
+
   // [?]
   auto output_blif_path = tmp_dir.GetPath() / "output.blif";
   VerilogHelper::CompileVerilog(
       {
-          // TODO define.v: generate dynamically and write to file(ideally
-          // generate using a ref to Segments2Pixels)
-          absl::StrCat(interstellar::data_dir,
-                       "/verilog/generated/message-define.v"),
+          defines_v_path.generic_string(),
           segments2pixels_v_path.generic_string(),
           absl::StrCat(interstellar::data_dir, "/verilog/rndswitch.v"),
           absl::StrCat(interstellar::data_dir, "/verilog/xorexpand.v"),

@@ -34,6 +34,8 @@ class Segments2Pixels {
    */
   std::string GenerateVerilog();
 
+  std::string GetDefines();
+
  private:
   uint32_t _width, _height, _nb_segments;
 
