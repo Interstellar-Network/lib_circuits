@@ -76,6 +76,11 @@ include(deps/protos.cmake)
 
 ################################################################################
 
+include(deps/cmake/coverage.cmake)
+include(deps/cmake/sanitizers.cmake)
+
+################################################################################
+
 # will embed all the .v,.png,etc.
 # (ie basically make them install-ready)
 add_subdirectory(data)
