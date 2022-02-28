@@ -20,8 +20,11 @@ FetchContent_Declare(
     abc
     GIT_REPOSITORY https://github.com/berkeley-abc/abc.git
     # NOTE: there is no release/tag...
+    # latest + yosys[0.8-0.14] FAIL garbling
     # Commits on Feb 18, 2022
-    GIT_TAG        31519bd6d6c9cff4691019f72e0faf72e37bde88
+    # GIT_TAG        31519bd6d6c9cff4691019f72e0faf72e37bde88
+    # Commits on Mar 11, 2018
+    GIT_TAG         c339c6f7f1d740558e1cfb4d6ba6eed818edb654
 )
 
 FetchContent_MakeAvailable(abc)

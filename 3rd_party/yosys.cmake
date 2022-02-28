@@ -57,6 +57,12 @@ ProcessorCount(N)
 FetchContent_Declare(yosys_dl
     # TODO use either local source, or a private mirror (ie in case official repo is taken down)
     GIT_REPOSITORY  https://github.com/YosysHQ/yosys.git
+    # FAIL: .skcd is generated but error/crash when garbling(one too many gate layer @FindAllGates)
+    # TODO update garling code to handle new version
+    # latest abc + yosys-0.8 FAIL
+    # latest abc + yosys-0.10 FAIL
+    # latest abc + yosys-0.13 FAIL
+    # latest abc + yosys-0.14 FAIL
     GIT_TAG yosys-0.14
 )
 
@@ -92,7 +98,7 @@ file(GENERATE OUTPUT ${yosys_dl_SOURCE_DIR}/Makefile.conf CONTENT
     # TODO pass correct CXX flags(at least use the same warnings than CMake)
     # ENABLE_DEBUG: NOT ENOUGH, also needs "fno-limit-debug-info"
     # TODO install; handle DATDIR ?
-    "ENABLE_LIBYOSYS := 1\nENABLE_ABC := 1\nLIBDIR := ${yosys_dl_SOURCE_DIR}\nENABLE_DEBUG := $<IF:$<CONFIG:Debug>,1,0>\nPREFIX := ${yosys_dl_BINARY_DIR}\n"
+    "ENABLE_LIBYOSYS := 1\nENABLE_ABC := 0\nLIBDIR := ${yosys_dl_SOURCE_DIR}\nENABLE_DEBUG := $<IF:$<CONFIG:Debug>,1,0>\nPREFIX := ${yosys_dl_BINARY_DIR}\n"
 )
 ExternalProject_Add_StepDependencies(yosys_ext build ${yosys_dl_SOURCE_DIR}/Makefile.conf)
 

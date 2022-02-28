@@ -8,7 +8,6 @@ option(lib_circuits_BUILD_TESTS "Build tests" ON)
 
 ################################################################################
 
-include(deps/cmake/compile_flags.cmake)
 include(deps/cmake/coverage.cmake)
 include(deps/cmake/options.cmake)
 include(deps/cmake/sanitizers.cmake)
@@ -27,6 +26,11 @@ include(3rd_party/xxhash.cmake)
 include(3rd_party/yosys.cmake) # TODO REMOVE ? if possible: use lorina+mockturtle instead?
 
 include(deps/protos.cmake)
+
+################################################################################
+
+# TODO fix flags for 3rd_party, and move above
+include(deps/cmake/compile_flags.cmake)
 
 ################################################################################
 

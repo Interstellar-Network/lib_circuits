@@ -67,6 +67,7 @@ static void yosys_setup() {
   // to AST representation
   //
   // MUST be before init_share_dirname(called by Yosys::yosys_setup)
+  // TODO
   Yosys::yosys_share_dirname =
       "/home/pratn/Documents/interstellar/lib_circuits/build/_deps/"
       "yosys_dl-src/share/";
@@ -131,17 +132,17 @@ void CompileVerilog(const std::vector<std::string_view> &inputs_v_full_paths,
 
   // TODO?
   // https://stackoverflow.com/questions/31434380/what-is-a-good-template-yosys-synthesis-script
-  Yosys::Pass::call(&yosys_design, "proc");
-  Yosys::Pass::call(&yosys_design, "opt");
+  // Yosys::Pass::call(&yosys_design, "proc");
+  // Yosys::Pass::call(&yosys_design, "opt");
   // Yosys::Pass::call(&yosys_design, "synth");
   // Yosys::Pass::call(&yosys_design, "opt");
   Yosys::Pass::call(&yosys_design, "techmap");
-  Yosys::Pass::call(&yosys_design, "opt");
+  // Yosys::Pass::call(&yosys_design, "opt");
 
   // Yosys::Pass::call(&yosys_design, "synth -noabc");
   // Yosys::Pass::call(&yosys_design, "abc");
-  Yosys::Pass::call(&yosys_design, "clean");
-  Yosys::Pass::call(&yosys_design, "opt");
+  // Yosys::Pass::call(&yosys_design, "clean");
+  // Yosys::Pass::call(&yosys_design, "opt");
 
   // TODO abc ?
   // "Note that this is a logic optimization pass within Yosys that is calling
