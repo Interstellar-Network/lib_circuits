@@ -63,7 +63,7 @@ class BlifParser {
 
   const std::vector<unsigned int> &GetO() const { return O_; }
 
-  CircuitData &GetCircuitData() { return circuit_data_; }
+  const CircuitData &GetCircuitData() const { return circuit_data_; }
 
  private:
   // Basic deps injection to use a fake PRNG during tests

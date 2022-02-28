@@ -43,6 +43,21 @@ void WriteToFile(boost::filesystem::path path, const BlifParser &blif_parser) {
   google::protobuf::RepeatedField<uint32_t> o_data(o.begin(), o.end());
   skcd_pb.mutable_o()->Swap(&o_data);
 
+  const auto &circuit_data = blif_parser.GetCircuitData();
+  skcd_pb.mutable_circuit_data()->set_gate_input_min(
+      circuit_data.gate_input_min);
+  skcd_pb.mutable_circuit_data()->set_gate_input_max(
+      circuit_data.gate_input_max);
+  skcd_pb.mutable_circuit_data()->set_gate_output_min(
+      circuit_data.gate_output_min);
+  skcd_pb.mutable_circuit_data()->set_gate_output_max(
+      circuit_data.gate_output_max);
+  skcd_pb.mutable_circuit_data()->mutable_layer_count()->Assign(
+      circuit_data.layer_count.begin(), circuit_data.layer_count.end());
+  skcd_pb.mutable_circuit_data()->mutable_input_gate_count()->Assign(
+      circuit_data.input_gate_count.begin(),
+      circuit_data.input_gate_count.end());
+
   std::fstream output(path.generic_string(),
                       std::ios::out | std::ios::trunc | std::ios::binary);
   auto ok = skcd_pb.SerializeToOstream(&output);
