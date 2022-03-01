@@ -15,6 +15,7 @@ target_link_libraries(segments2pixels
     resources
     utils_files
     utils_rle
+    verilog_defines
 )
 
 target_include_directories(segments2pixels

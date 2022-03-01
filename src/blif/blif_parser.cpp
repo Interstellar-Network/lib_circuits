@@ -255,7 +255,7 @@ void BlifParser::ParseBuffer(std::string_view blif_buffer, bool zero) {
   // expected : .model main
   // TODO technically we only care about ".model"; "main" is making the parser
   // less flexible for no good reason
-  if (lines[0] != ".model main") {
+  if (!absl::StartsWith(lines[0], ".model ")) {
     throw std::runtime_error("BlifParser::Parse : invalid .model");
   }
 

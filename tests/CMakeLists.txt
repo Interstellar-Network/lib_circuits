@@ -43,6 +43,7 @@ endfunction()
 
 # basic cli(not googletest); but that still works fine
 # add_google_test(hello_cli "circuit_lib lorina absl::strings resources")
-add_google_test(hello_skcd "circuit_lib resources absl::flags absl::flags_parse")
+add_google_test(cli_display_skcd "circuit_lib absl::flags absl::flags_parse")
+add_google_test(cli_generic_skcd "circuit_lib absl::flags absl::flags_parse")
 
 ################################################################################

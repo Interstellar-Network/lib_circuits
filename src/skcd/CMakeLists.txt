@@ -13,6 +13,7 @@ target_link_libraries(skcd
     PRIVATE
     interstellar_protos
     utils_files
+    glog::glog
 
     PUBLIC
     blif_parser

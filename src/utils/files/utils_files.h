@@ -21,7 +21,7 @@ class TempDir {
 
   ~TempDir();
 
-  boost::filesystem::path GetPath();
+  boost::filesystem::path GetPath() const;
 
  private:
   boost::filesystem::path _tmp_dir_path, _cwd_before;

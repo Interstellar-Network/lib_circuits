@@ -1,5 +1,7 @@
 #include "skcd.h"
 
+#include <glog/logging.h>
+
 #include "skcd.pb.h"
 
 namespace interstellar {
@@ -64,6 +66,8 @@ void WriteToFile(boost::filesystem::path path, const BlifParser &blif_parser) {
   if (!ok) {
     throw std::runtime_error("Serialization failed");
   }
+
+  LOG(INFO) << "wrote skcd : " << path;
 }
 
 }  // namespace skcd

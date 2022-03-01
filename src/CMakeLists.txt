@@ -3,6 +3,7 @@
 add_subdirectory(abc_wrapper)
 add_subdirectory(segments2pixels)
 add_subdirectory(verilog)
+add_subdirectory(verilog_defines)
 add_subdirectory(utils/encode_rle/)
 add_subdirectory(utils/files/)
 add_subdirectory(blif)

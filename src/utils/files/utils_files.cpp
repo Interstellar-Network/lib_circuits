@@ -56,7 +56,7 @@ TempDir::~TempDir() {
   boost::filesystem::remove_all(_tmp_dir_path);
 }
 
-boost::filesystem::path TempDir::GetPath() { return _tmp_dir_path; }
+boost::filesystem::path TempDir::GetPath() const { return _tmp_dir_path; }
 
 void WriteToFile(boost::filesystem::path path, std::string_view content) {
   // TODO better error handling

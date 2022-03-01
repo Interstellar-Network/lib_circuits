@@ -21,6 +21,7 @@
 #include "resources.h"
 #include "utils/encode_rle/encode_rle.h"
 #include "utils/files/utils_files.h"
+#include "verilog_defines/verilog_defines.h"
 
 namespace interstellar {
 
@@ -296,12 +297,6 @@ std::string Segments2Pixels::GenerateVerilog() {
   `define BITMAP_NB_SEGMENTS 28
  */
 std::string Segments2Pixels::GetDefines() {
-  std::string defines_buf;
-
-  absl::StrAppend(&defines_buf, "`define WIDTH ", _width, "\n");
-  absl::StrAppend(&defines_buf, "`define HEIGHT ", _height, "\n");
-  absl::StrAppend(&defines_buf, "`define BITMAP_NB_SEGMENTS ", _nb_segments,
-                  "\n");
   // RNDSIZE
   // TODO Check
   // Historically(before the support of variable otp_length), message had
@@ -309,9 +304,14 @@ std::string Segments2Pixels::GetDefines() {
   // math.ceil(0.5 * math.sqrt(8 * otp_length * message_seg + 1) + 1)
   auto rndsize = static_cast<unsigned int>(
       std::max(std::ceil(0.5 * std::sqrt(8 * _nb_segments + 1) + 1), 9.));
-  absl::StrAppend(&defines_buf, "`define RNDSIZE ", rndsize, "\n");
 
-  return defines_buf;
+  auto verilog_defines = verilog::Defines();
+  verilog_defines.AddDefine("WIDTH", _width);
+  verilog_defines.AddDefine("HEIGHT", _height);
+  verilog_defines.AddDefine("BITMAP_NB_SEGMENTS", _nb_segments);
+  verilog_defines.AddDefine("RNDSIZE", rndsize);
+
+  return verilog_defines.GetDefinesVerilog();
 }
 
 }  // namespace interstellar

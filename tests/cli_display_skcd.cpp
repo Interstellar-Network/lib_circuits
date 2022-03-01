@@ -15,7 +15,8 @@ int main(int argc, char** argv) {
   auto width = absl::GetFlag(FLAGS_width);
   auto height = absl::GetFlag(FLAGS_height);
 
-  interstellar::CircuitPipeline::GenerateSkcd(output_skcd_path, width, height);
+  interstellar::CircuitPipeline::GenerateDisplaySkcd(output_skcd_path, width,
+                                                     height);
 
   return 0;
 }
