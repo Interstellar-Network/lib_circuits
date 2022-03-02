@@ -1,5 +1,11 @@
 include(FetchContent)
 
+# only way to disable glog tests...
+# https://github.com/google/glog/pull/200
+# "clean workaround" apparently
+set(BUILD_TESTING_SAVED "${BUILD_TESTING}")
+set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+
 FetchContent_Declare(
     glog
     # v0.5.0 released this May 08, 2021
@@ -10,3 +16,5 @@ FetchContent_Declare(
 )
 
 FetchContent_MakeAvailable(glog)
+
+set(BUILD_TESTING "${BUILD_TESTING_SAVED}" CACHE BOOL "" FORCE)
