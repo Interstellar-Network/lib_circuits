@@ -24,4 +24,9 @@ target_compile_options(abc-wrapper
     PRIVATE
     # b/c of abc_global.h and others
     -Wno-unused-parameter
+
+    $<$<CXX_COMPILER_ID:GNU>:
+        -Wno-cast-function-type
+        -Wno-shift-negative-value
+        >
 )

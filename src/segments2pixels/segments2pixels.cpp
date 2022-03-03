@@ -95,7 +95,7 @@ std::vector<utils::RLE_int8_t> ImgReplaceBitmapSegIDs(
   auto has_alpha = img.spectrum() == 4;
 
   // CHECK that we indeed only need 32 bits for the segment IDs
-  if (map_color_to_id.size() >= std::numeric_limits<int8_t>::max()) {
+  if (map_color_to_id.size() >= std::numeric_limits<uint8_t>::max()) {
     throw std::runtime_error(
         "bitmap_seg_ids too small; requires 16 bits or more!");
   }
@@ -119,7 +119,7 @@ std::vector<utils::RLE_int8_t> ImgReplaceBitmapSegIDs(
 
       auto color = ColorRGBA(r, g, b, a);
 
-      assert(map_color_to_id.at(color) < std::numeric_limits<int8_t>::max() &&
+      assert(map_color_to_id.at(color) < std::numeric_limits<uint8_t>::max() &&
              "Segment ID does not fit on 8 bits!");
       bitmap_seg_ids.emplace_back(
           static_cast<uint8_t>(map_color_to_id.at(color)));
