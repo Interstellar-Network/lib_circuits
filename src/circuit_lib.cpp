@@ -45,7 +45,7 @@ void GenerateSkcd(boost::filesystem::path skcd_output_path,
 }
 
 /**
- * Quick helper to call the main "GenerateSkcd" reusing a given TempDir
+ * Overload to call the main "GenerateSkcd" reusing a given TempDir
  */
 void GenerateSkcd(boost::filesystem::path skcd_output_path,
                   const std::vector<std::string_view> &verilog_inputs_paths) {
@@ -55,11 +55,11 @@ void GenerateSkcd(boost::filesystem::path skcd_output_path,
 
 void GenerateDisplaySkcd(boost::filesystem::path skcd_output_path,
                          u_int32_t width, u_int32_t height) {
+  auto tmp_dir = utils::TempDir();
+
   // [1] generate Verilog segments2pixels.v
   auto segment2pixels = Segments2Pixels(width, height);
   auto segment2pixels_v_str = segment2pixels.GenerateVerilog();
-
-  auto tmp_dir = utils::TempDir();
 
   // write this to segments2pixels.v (in the temp dir)
   // because Yosys only handles files, not buffers

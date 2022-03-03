@@ -4,12 +4,13 @@
 //                           '1' to use the X-Window framework (X11).
 //                           '2' to use the Microsoft GDI32 framework.
 // else lots of eg "CImg.h:10322: undefined reference to `XMoveWindow'"
-#define cimg_display 1
+#define cimg_display 0
 #define cimg_use_png
 #include <CImg.h>
 #include <absl/hash/hash.h>
 #include <absl/strings/str_cat.h>
 #include <fmt/format.h>
+#include <glog/logging.h>
 
 #include <algorithm>
 #include <filesystem>
@@ -215,8 +216,10 @@ Segments2Pixels::Segments2Pixels(uint32_t width, uint32_t height)
   assert(_nb_segments == ImgListUniqueColors(png_img).size() * 2 &&
          "Something went wrong? Should probably only have found 7*2 segments");
 
-  display_img.display();  // TODO remove, and set correct define cimg_display,
-                          // and remove -lX11
+  // TODO add a flag/option to control this; only useful for dev/debug
+  auto bitmap_png = "bitmap.png";
+  display_img.save_png(bitmap_png);
+  LOG(INFO) << "saved : " << std::filesystem::current_path() / bitmap_png;
 
   // now prepare the final "bitmap"
   // i.e. replace each color pixel by its corresponding segment ID

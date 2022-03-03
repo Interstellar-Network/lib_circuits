@@ -8,9 +8,9 @@ target_link_libraries(segments2pixels
     PRIVATE
     PNG::PNG
     cimg
-    X11 # TODO remove
     absl::strings
     fmt::fmt
+    glog::glog
 
     resources
     utils_files
