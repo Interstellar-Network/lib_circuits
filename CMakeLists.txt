@@ -19,8 +19,11 @@ include(3rd_party/cimg.cmake)
 include(3rd_party/abseil.cmake)
 include(3rd_party/fmt.cmake)
 include(3rd_party/glog.cmake)
+include(3rd_party/lorina.cmake)
+include(3rd_party/mockturle.cmake)
 include(3rd_party/protobuf.cmake)
 include(3rd_party/xxhash.cmake)
+# TODO REMOVE yosys+abc? if possible: use lorina+mockturtle instead?
 include(3rd_party/yosys.cmake)
 
 include(deps/protos.cmake)

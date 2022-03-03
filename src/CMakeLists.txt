@@ -19,6 +19,7 @@ add_library(circuit_lib
 
 target_link_libraries(circuit_lib
     PRIVATE
+    mockturtle
     absl::strings
 
     abc-wrapper
