@@ -103,8 +103,10 @@ std::vector<utils::RLE_int8_t> ImgReplaceBitmapSegIDs(
   std::vector<int8_t> bitmap_seg_ids;
   bitmap_seg_ids.reserve(width * height);
 
-  for (int x = 0; x < width; ++x) {
-    for (int y = 0; y < height; ++y) {
+  // CAREFUL: DO NOT switch the order else the final garbled outputs will be
+  // rotated 90 degrees. Not a catastrophe but not ideal.
+  for (int y = 0; y < height; ++y) {
+    for (int x = 0; x < width; ++x) {
       // NOTE: z range is [0,depth() - 1)
       auto r = img(x, y, 0, 0, wh, whd);
       auto g = img(x, y, 0, 1, wh, whd);
