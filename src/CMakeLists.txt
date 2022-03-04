@@ -26,6 +26,7 @@ target_link_libraries(circuit_lib
     verilog_compiler
     resources
     skcd
+    utils_files
 )
 
 target_include_directories(circuit_lib
