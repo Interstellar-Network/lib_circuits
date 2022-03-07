@@ -1,7 +1,9 @@
 #include "verilog_compiler.h"
 
+#include <absl/base/call_once.h>
 #include <absl/strings/str_cat.h>
 #include <absl/strings/str_join.h>
+#include <absl/synchronization/mutex.h>
 #include <glog/logging.h>
 #include <kernel/yosys.h>
 
@@ -67,10 +69,14 @@ static void yosys_setup() {
   // to AST representation
   //
   // MUST be before init_share_dirname(called by Yosys::yosys_setup)
+  // Setting yosys_share_dirname avoid having to package/install yosys
+  // system-wide. WARNING: this will FAIL if this dir DOES NOT contain any
+  // required file For now we only need techmap.v
   // TODO
-  Yosys::yosys_share_dirname =
-      "/home/pratn/Documents/interstellar/lib_circuits/build/_deps/"
-      "yosys_dl-src/share/";
+  // Yosys::yosys_share_dirname =
+  //     "/home/pratn/Documents/interstellar/lib_circuits/build/_deps/"
+  //     "yosys_dl-src/share/";
+  Yosys::yosys_share_dirname = absl::StrCat(interstellar::data_dir, "/yosys/");
 
 #if 1
   Yosys::yosys_setup();
@@ -81,14 +87,32 @@ static void yosys_setup() {
   log_assert(empty_id.index_ == 0);
   // Yosys::IdString::get_reference(empty_id.index_); // WARNING: memory leak?!
 
+  // Not needed b/c we set Yosys::yosys_share_dirname
+  // init_share_dirname();
+  // Not needed b/c we do not use yosys-abc
+  // init_abc_executable_name();
+
+  // TODO?
+  // #define X(_id) RTLIL::ID::_id = "\\" #_id;
+  // #include "kernel/constids.inc"
+  // #undef X
+
   Yosys::Pass::init_register();
 
+  // Not needed b/c we Yosys::Pass::call instead of the high-level API
+  // that way we avoid Yosys's global vars
   // yosys_design = new RTLIL::Design;
 
-  // yosys_celltypes.setup();
+  // NOT EXPOSED
+  // Yosys::yosys_celltypes.setup();
 
   Yosys::log_push();
 #endif
+
+  static FilterErrorStreamBuf filtered_streambuf;
+  static std::ostream yosys_log_stream(&filtered_streambuf);
+  Yosys::log_streams.push_back(&yosys_log_stream);
+  Yosys::log_error_stderr = true;
 }
 
 namespace interstellar {
@@ -100,30 +124,20 @@ namespace VerilogHelper {
 // - avoid parsing strings(a-la cli : args passed to yosys command via strings)
 void CompileVerilog(const std::vector<std::string_view> &inputs_v_full_paths,
                     std::string_view output_blif_full_path) {
-  static bool is_setup = false;
+  static absl::Mutex lock;
+  static absl::once_flag once_flag;
 
-  if (!is_setup) {
-    static FilterErrorStreamBuf filtered_streambuf;
-    static std::ostream yosys_log_stream(&filtered_streambuf);
-    Yosys::log_streams.push_back(&yosys_log_stream);
-    Yosys::log_error_stderr = true;
-
-    // Custom version, still needed for the Pass register
-    // TODO remove and add custom Pass::call
-    yosys_setup();
-
-    is_setup = true;
-  } else {
-    // Not the first time, nothing to setup
-  }
-
-  // TODO remove the Pass and use the Frontend directly eg "Yosys::Pass"?
-  // Yosys::Pass::init_register(); // normally called by yosys_setup
+  absl::call_once(once_flag, yosys_setup);
 
   Yosys::RTLIL::Design yosys_design;
 
   // TODO? we could check if the files exist, are readable, etc BEFORE giving
   // them to Yosys to have cleaner error handling
+
+  // DO NOT REMOVE
+  // Yosys is NOT thread safe
+  // NEITHER the setup() NOR the call()
+  absl::MutexLock yosys_mutexlock(&lock);
 
   // TODO use Yosys::run_pass(read_verilog_cmd) everywhere?
   Yosys::Pass::call(

@@ -63,7 +63,10 @@ FetchContent_Declare(yosys_dl
     # latest abc + yosys-0.10 FAIL
     # latest abc + yosys-0.13 FAIL
     # latest abc + yosys-0.14 FAIL
-    GIT_TAG yosys-0.14
+    # WARNING: yosys-0.14 NOT thread safe
+    # yosys-0.8 NOT thread safe
+    # yosys-0.7 NOT thread safe
+    GIT_TAG yosys-0.15
 )
 
 FetchContent_MakeAvailable(yosys_dl)

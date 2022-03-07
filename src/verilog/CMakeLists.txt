@@ -6,6 +6,7 @@ target_link_libraries(verilog_compiler
     PRIVATE
     yosys
     absl::strings
+    absl::synchronization
     glog::glog
 
     resources
