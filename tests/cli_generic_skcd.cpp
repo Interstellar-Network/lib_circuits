@@ -1,5 +1,6 @@
 #include <absl/flags/flag.h>
 #include <absl/flags/parse.h>
+#include <glog/logging.h>
 
 #include "circuit_lib.h"
 
@@ -12,6 +13,7 @@ ABSL_FLAG(std::string, input_verilog_path, "", "input file .v");
  * eg adder/sha/aes/etc
  */
 int main(int argc, char** argv) {
+  google::InitGoogleLogging(argv[0]);
   absl::ParseCommandLine(argc, argv);
 
   auto output_skcd_path = absl::GetFlag(FLAGS_output_skcd_path);

@@ -1,6 +1,7 @@
 #include "verilog/verilog_compiler.h"
 
 #include <absl/strings/str_cat.h>
+#include <glog/logging.h>
 #include <gtest/gtest.h>
 
 #include <filesystem>
@@ -50,4 +51,10 @@ TEST(VerilogCompilerTest, ThreadSafeOk) {
   EXPECT_LT(boost::filesystem::file_size(absl::StrCat(
                 output_path.generic_string(), nb_threads - 1, ".blif")),
             1000);
+}
+
+int main(int argc, char** argv) {
+  ::testing::InitGoogleTest(&argc, argv);
+  google::InitGoogleLogging(argv[0]);
+  return RUN_ALL_TESTS();
 }

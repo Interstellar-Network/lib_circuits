@@ -29,6 +29,7 @@ function(add_google_test test_cpp_name DEPENDENCY_LIBS)
 
     target_link_libraries(${test_cpp_name}
         gtest_main
+        glog::glog
         ${DEPENDENCY_LIBS}
     )
 

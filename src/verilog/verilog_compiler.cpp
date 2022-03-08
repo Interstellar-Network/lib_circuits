@@ -119,25 +119,27 @@ namespace interstellar {
 
 namespace VerilogHelper {
 
+ABSL_CONST_INIT absl::Mutex yosys_mutex(absl::kConstInit);
+// "is safe to use as a namespace-scoped global variable"
+absl::once_flag yosys_setup_flag;
+
 // TODO use low-level yosys functions :
 // - add error handling
 // - avoid parsing strings(a-la cli : args passed to yosys command via strings)
 void CompileVerilog(const std::vector<std::string_view> &inputs_v_full_paths,
                     std::string_view output_blif_full_path) {
-  static absl::Mutex lock;
-  static absl::once_flag once_flag;
+  // DO NOT REMOVE
+  // Yosys is NOT thread safe
+  // NEITHER the setup() NOR the call()
+  absl::MutexLock yosys_lock(&yosys_mutex);
 
-  absl::call_once(once_flag, yosys_setup);
+  absl::call_once(yosys_setup_flag, yosys_setup);
+  // yosys_setup();
 
   Yosys::RTLIL::Design yosys_design;
 
   // TODO? we could check if the files exist, are readable, etc BEFORE giving
   // them to Yosys to have cleaner error handling
-
-  // DO NOT REMOVE
-  // Yosys is NOT thread safe
-  // NEITHER the setup() NOR the call()
-  absl::MutexLock yosys_mutexlock(&lock);
 
   // TODO use Yosys::run_pass(read_verilog_cmd) everywhere?
   Yosys::Pass::call(

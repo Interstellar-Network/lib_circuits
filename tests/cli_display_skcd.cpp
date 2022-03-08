@@ -1,5 +1,6 @@
 #include <absl/flags/flag.h>
 #include <absl/flags/parse.h>
+#include <glog/logging.h>
 
 #include "circuit_lib.h"
 
@@ -9,6 +10,7 @@ ABSL_FLAG(u_int32_t, width, 1280 / 2, "width");
 ABSL_FLAG(u_int32_t, height, 720 / 2, "height");
 
 int main(int argc, char** argv) {
+  google::InitGoogleLogging(argv[0]);
   absl::ParseCommandLine(argc, argv);
 
   auto output_skcd_path = absl::GetFlag(FLAGS_output_skcd_path);

@@ -42,16 +42,10 @@ TempDir::TempDir() {
     throw std::runtime_error(msg);
   }
 
-  DLOG(INFO) << "TempDir : created : " << _tmp_dir_path.generic_string();
-
-  _cwd_before = boost::filesystem::current_path();
-  boost::filesystem::current_path(_tmp_dir_path);
+  // DO NOT cwd into the temp dir; that WOULD break concurrency!
 }
 
 TempDir::~TempDir() {
-  // restore the current dir
-  boost::filesystem::current_path(_cwd_before);
-
   // delete the temp path
   boost::filesystem::remove_all(_tmp_dir_path);
 }

@@ -219,9 +219,9 @@ Segments2Pixels::Segments2Pixels(uint32_t width, uint32_t height)
          "Something went wrong? Should probably only have found 7*2 segments");
 
   // TODO add a flag/option to control this; only useful for dev/debug
-  auto bitmap_png = "bitmap.png";
-  display_img.save_png(bitmap_png);
-  LOG(INFO) << "saved : " << std::filesystem::current_path() / bitmap_png;
+  // auto bitmap_png = "bitmap.png";
+  // display_img.save_png(bitmap_png);
+  // LOG(INFO) << "saved : " << std::filesystem::current_path() / bitmap_png;
 
   // now prepare the final "bitmap"
   // i.e. replace each color pixel by its corresponding segment ID

@@ -24,7 +24,7 @@ class TempDir {
   boost::filesystem::path GetPath() const;
 
  private:
-  boost::filesystem::path _tmp_dir_path, _cwd_before;
+  boost::filesystem::path _tmp_dir_path;
 };
 
 void WriteToFile(boost::filesystem::path path, std::string_view content);
