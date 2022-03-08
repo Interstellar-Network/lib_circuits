@@ -10,19 +10,15 @@
 #include "utils/files/utils_files.h"
 #include "verilog/verilog_compiler.h"
 
-namespace interstellar {
+namespace {
 
-namespace CircuitPipeline {
-
-// TODO how to handle InitGoogleLogging ?
-
-void GenerateSkcd(boost::filesystem::path skcd_output_path,
-                  const std::vector<std::string_view> &verilog_inputs_paths,
-                  const utils::TempDir &tmp_dir) {
+interstellar::BlifParser GenerateBlifBlif(
+    const std::vector<std::string_view> &verilog_inputs_paths,
+    const interstellar::utils::TempDir &tmp_dir) {
   auto output_blif_path = tmp_dir.GetPath() / "output.blif";
 
-  VerilogHelper::CompileVerilog(verilog_inputs_paths,
-                                output_blif_path.generic_string());
+  interstellar::VerilogHelper::CompileVerilog(
+      verilog_inputs_paths, output_blif_path.generic_string());
 
   // [?] abc pass: .blif containing multiple models
   // -> .blif.blif with "main" only
@@ -36,16 +32,40 @@ void GenerateSkcd(boost::filesystem::path skcd_output_path,
   // convert .blif.blif -> ~.skcd
   // NOTE: Skcd class was previously used to pass the data around, but it has
   // been replaced by protobuf serialization
-  auto blif_parser = BlifParser();
-  auto tmp_blif_blif_str = utils::ReadFile(final_blif_blif_path);
+  auto blif_parser = interstellar::BlifParser();
+  auto tmp_blif_blif_str = interstellar::utils::ReadFile(final_blif_blif_path);
   blif_parser.ParseBuffer(tmp_blif_blif_str, true);
 
-  // [?]
+  return blif_parser;
+}
+
+}  // namespace
+
+namespace interstellar {
+
+namespace CircuitPipeline {
+
+// TODO how to handle InitGoogleLogging ?
+
+void GenerateSkcd(boost::filesystem::path skcd_output_path,
+                  const std::vector<std::string_view> &verilog_inputs_paths,
+                  const utils::TempDir &tmp_dir) {
+  auto blif_parser = GenerateBlifBlif(verilog_inputs_paths, tmp_dir);
+
   interstellar::skcd::WriteToFile(skcd_output_path, blif_parser);
 }
 
+std::string GenerateSkcd(
+    const std::vector<std::string_view> &verilog_inputs_paths,
+    const utils::TempDir &tmp_dir) {
+  auto blif_parser = GenerateBlifBlif(verilog_inputs_paths, tmp_dir);
+
+  return interstellar::skcd::Serialize(blif_parser);
+}
+
 /**
- * Overload to call the main "GenerateSkcd" reusing a given TempDir
+ * [internal]
+ * Overload[1] to call the main "GenerateSkcd" reusing a given TempDir
  */
 void GenerateSkcd(boost::filesystem::path skcd_output_path,
                   const std::vector<std::string_view> &verilog_inputs_paths) {
@@ -53,8 +73,24 @@ void GenerateSkcd(boost::filesystem::path skcd_output_path,
   GenerateSkcd(skcd_output_path, verilog_inputs_paths, tmp_dir);
 }
 
+/**
+ * [internal]
+ * Overload[2] to call the main "GenerateSkcd" reusing a given TempDir
+ */
+std::string GenerateSkcd(
+    const std::vector<std::string_view> &verilog_inputs_paths) {
+  auto tmp_dir = utils::TempDir();
+  return GenerateSkcd(verilog_inputs_paths, tmp_dir);
+}
+
 void GenerateDisplaySkcd(boost::filesystem::path skcd_output_path,
                          u_int32_t width, u_int32_t height) {
+  auto result_skcd_buf = GenerateDisplaySkcd(width, height);
+
+  utils::WriteToFile(skcd_output_path, result_skcd_buf);
+}
+
+std::string GenerateDisplaySkcd(u_int32_t width, u_int32_t height) {
   auto tmp_dir = utils::TempDir();
 
   // [1] generate Verilog segments2pixels.v
@@ -72,16 +108,15 @@ void GenerateDisplaySkcd(boost::filesystem::path skcd_output_path,
   auto defines_v_path = tmp_dir.GetPath() / "defines.v";
   utils::WriteToFile(defines_v_path, defines_v_str);
 
-  // [?]
-  GenerateSkcd(
-      skcd_output_path,
-      {
-          defines_v_path.generic_string(),
-          segments2pixels_v_path.generic_string(),
-          absl::StrCat(interstellar::data_dir, "/verilog/rndswitch.v"),
-          absl::StrCat(interstellar::data_dir, "/verilog/xorexpand.v"),
-          absl::StrCat(interstellar::data_dir, "/verilog/display-main.v"),
-      });
+  std::string result_skcd_buf = GenerateSkcd({
+      defines_v_path.generic_string(),
+      segments2pixels_v_path.generic_string(),
+      absl::StrCat(interstellar::data_dir, "/verilog/rndswitch.v"),
+      absl::StrCat(interstellar::data_dir, "/verilog/xorexpand.v"),
+      absl::StrCat(interstellar::data_dir, "/verilog/display-main.v"),
+  });
+
+  return result_skcd_buf;
 }
 
 }  // namespace CircuitPipeline

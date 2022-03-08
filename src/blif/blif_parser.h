@@ -39,6 +39,13 @@ class BlifParser {
   // TODO remove when NOT a test build
   BlifParser(std::shared_ptr<RandomInterface> random) : random_(random) {}
 
+  // Disable copy semantics.
+  BlifParser(const BlifParser &) = delete;
+  BlifParser &operator=(const BlifParser &) = delete;
+  // noncopyable, but we still need the moves
+  BlifParser(BlifParser &&) = default;
+  BlifParser &operator=(BlifParser &&) = default;
+
   // TODO handle the '-z' option, see lib_python
   // TODO return a struct/class
   // TODO string_view
