@@ -1,6 +1,7 @@
 #include "abc_wrapper.h"
 
 #include <absl/strings/str_cat.h>
+#include <absl/synchronization/mutex.h>
 #include <glog/logging.h>
 
 // clang-format off
@@ -23,21 +24,26 @@ class AbcWrapper {
  private:
   // TODO unique_ptr, but the dtor requires Abc_Frame_t as complete type
   Abc_Frame_t *abc_frame_t_;
+
+  // TODO ideally we want ABC to be thread safe, and avoid any lock...
+  // inline needs c++17 https://stackoverflow.com/a/62915890/5312991
+  inline static absl::Mutex lock_;
+  absl::MutexLock yosys_mutexlock_;
 };
 
 // template<typename AbcFrameT>
-AbcWrapper::AbcWrapper() {
-  // TODO replace by cf
-  // https://github.com/berkeley-abc/abc/blob/master/src/demo.c "start the
-  // framework" s_GlobalFrame = Abc_FrameAllocate(); "perform initializations"
-  // Abc_FrameInit( s_GlobalFrame );
-
-  // start the ABC framework
+AbcWrapper::AbcWrapper() : yosys_mutexlock_(&AbcWrapper::lock_) {
+  // NOT thread safe!
+  // "start the ABC framework"
   Abc_Start();
 
-  // Abc_Frame_t *pAbc = Abc_FrameGetGlobalFrame();
-  // abc_frame_t_ = std::make_unique<Abc_Frame_t>();
   abc_frame_t_ = Abc_FrameGetGlobalFrame();
+
+  // abc_frame_t_ = Abc_FrameAllocate();
+  // "perform initializations"
+  // DO NOT CALL if Abc_Start/Abc_FrameGetGlobalFrame was NOT called
+  // b/c it depends on the ABC global static "s_GlobalFrame"
+  // Abc_FrameInit(abc_frame_t_);
 }
 
 // template<typename AbcFrameT>

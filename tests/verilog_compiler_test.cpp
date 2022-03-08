@@ -11,7 +11,7 @@
 
 TEST(VerilogCompilerTest, BasicAdderOk) {
   auto tmp_dir = interstellar::utils::TempDir();
-  auto output_path = tmp_dir.GetPath() / "output.v";
+  auto output_path = tmp_dir.GetPath() / "output.blif";
 
   interstellar::VerilogHelper::CompileVerilog(
       {absl::StrCat(interstellar::data_dir, "/verilog/adder.v")},
@@ -36,7 +36,7 @@ TEST(VerilogCompilerTest, ThreadSafeOk) {
     threads[i] = std::thread([&output_path, i] {
       interstellar::VerilogHelper::CompileVerilog(
           {absl::StrCat(interstellar::data_dir, "/verilog/adder.v")},
-          absl::StrCat(output_path.generic_string(), i, ".v"));
+          absl::StrCat(output_path.generic_string(), i, ".blif"));
     });
   }
 
@@ -45,9 +45,9 @@ TEST(VerilogCompilerTest, ThreadSafeOk) {
   }
 
   EXPECT_GT(boost::filesystem::file_size(absl::StrCat(
-                output_path.generic_string(), nb_threads - 1, ".v")),
+                output_path.generic_string(), nb_threads - 1, ".blif")),
             900);
   EXPECT_LT(boost::filesystem::file_size(absl::StrCat(
-                output_path.generic_string(), nb_threads - 1, ".v")),
+                output_path.generic_string(), nb_threads - 1, ".blif")),
             1000);
 }

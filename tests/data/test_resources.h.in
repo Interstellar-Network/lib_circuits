@@ -1,0 +1,11 @@
+#pragma once
+
+namespace interstellar {
+
+namespace test {
+
+static char const constexpr *const test_data_dir = "@RESOURCE_DIR@";
+
+}  // namespace test
+
+}  // namespace interstellar

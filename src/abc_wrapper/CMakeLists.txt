@@ -8,6 +8,7 @@ target_link_libraries(abc-wrapper
     PRIVATE
     libabc-pic
     absl::strings
+    absl::synchronization
     glog::glog
 
     resources
