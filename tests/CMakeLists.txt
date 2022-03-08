@@ -41,11 +41,13 @@ endfunction()
 # but relinking avoids:
 # - making it public which would not be right
 # - copy-pasting resources.h.in in tests/
- # NOTE: gtest_discover_tests requires cmake 3.10
-add_google_test(verilog_compiler_test "verilog_compiler resources absl::strings utils_files")
-gtest_discover_tests(verilog_compiler_test)
+# NOTE: gtest_discover_tests requires cmake 3.10
 add_google_test(abc_test "abc-wrapper test_resources absl::strings utils_files")
 gtest_discover_tests(abc_test)
+add_google_test(full_pipeline_test "circuit_lib test_resources absl::strings utils_files")
+gtest_discover_tests(full_pipeline_test)
+add_google_test(verilog_compiler_test "verilog_compiler resources absl::strings utils_files")
+gtest_discover_tests(verilog_compiler_test)
 
 # basic cli(not googletest); but that still works fine
 # add_google_test(hello_cli "circuit_lib lorina absl::strings resources")
