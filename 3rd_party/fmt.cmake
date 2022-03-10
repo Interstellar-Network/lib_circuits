@@ -7,3 +7,15 @@ FetchContent_Declare(
 )
 
 FetchContent_MakeAvailable(fmt)
+
+# cmake --build . --target help | grep fmt
+set(TARGETS_LIST
+fmt
+)
+
+foreach(TARGET IN LISTS TARGETS_LIST)
+    set_target_properties(${TARGET} PROPERTIES
+      # disable auto-running clang-tidy
+      CXX_CLANG_TIDY ""
+  )
+endforeach()

@@ -10,3 +10,12 @@ FetchContent_Declare(
 )
 
 FetchContent_MakeAvailable(glog)
+
+set_target_properties(glog PROPERTIES
+    # disable auto-running clang-tidy
+    CXX_CLANG_TIDY ""
+)
+set_target_properties(glogbase PROPERTIES
+    # disable auto-running clang-tidy
+    CXX_CLANG_TIDY ""
+)

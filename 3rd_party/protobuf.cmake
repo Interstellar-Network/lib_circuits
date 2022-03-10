@@ -16,3 +16,18 @@ option(protobuf_DISABLE_RTTI "Remove runtime type information in the binaries" O
 option(protobuf_WITH_ZLIB "Build with zlib support" OFF)  # default ON
 
 FetchContent_MakeAvailable(protobuf_fetch)
+
+# cmake --build . --target help | grep proto
+set(TARGETS_LIST
+libprotobuf
+libprotobuf-lite
+libprotoc
+protoc
+)
+
+foreach(TARGET IN LISTS TARGETS_LIST)
+    set_target_properties(${TARGET} PROPERTIES
+      # disable auto-running clang-tidy
+      CXX_CLANG_TIDY ""
+  )
+endforeach()

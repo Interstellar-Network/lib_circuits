@@ -37,3 +37,9 @@ target_compile_options(libabc-pic PRIVATE
     -Wno-self-assign
     -Wno-implicit-const-int-float-conversion
 )
+
+set_target_properties(libabc-pic PROPERTIES
+    # disable auto-running clang-tidy
+    # LOTS of errors if we try... Same with sanitizers...
+    CXX_CLANG_TIDY ""
+)

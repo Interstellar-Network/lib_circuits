@@ -11,3 +11,16 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 include(GoogleTest)
+
+# cmake --build . --target help | grep gtest
+set(TARGETS_LIST
+gtest
+gtest_main
+)
+
+foreach(TARGET IN LISTS TARGETS_LIST)
+    set_target_properties(${TARGET} PROPERTIES
+      # disable auto-running clang-tidy
+      CXX_CLANG_TIDY ""
+  )
+endforeach()
