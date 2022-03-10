@@ -7,9 +7,7 @@
 
 // clang-format off
 // clang-format would reorder those includes, but main.h must be first
-#include <base/main/main.h>  // abc // NOLINT
-#include <base/main/abcapis.h> // NOLINT
-#include <base/main/mainInt.h> // NOLINT
+#include <base/main/main.h>
 // clang-format on
 
 #include "resources.h"
