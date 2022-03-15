@@ -56,20 +56,3 @@ target_link_libraries(interstellar_protos
     PRIVATE
     ${_PROTOBUF_LIBPROTOBUF}
 )
-
-################################################################################
-# fix compile flags for protobuf
-
-# TODO both SHOULD be PRIVATE flags
-target_compile_options(libprotobuf
-    PUBLIC
-    -Wno-invalid-noreturn
-    -Wno-unused-parameter
-    -Wno-sign-compare
-)
-
-target_compile_options(protoc
-    PUBLIC
-    -Wno-unused-parameter
-    -Wno-sign-compare
-)
