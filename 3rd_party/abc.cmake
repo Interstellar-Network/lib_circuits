@@ -29,7 +29,7 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(abc)
 
-target_compile_options(libabc-pic PRIVATE
+set(ABC_CXX_FLAGS
     -Wno-unused-parameter
     -Wno-format
     -Wno-empty-body
@@ -37,6 +37,51 @@ target_compile_options(libabc-pic PRIVATE
     # [build] # warning "_BSD_SOURCE and _SVID_SOURCE are deprecated, use _DEFAULT_SOURCE"
     -Wno-cpp
     -Wno-misleading-indentation
-    -Wno-self-assign
-    -Wno-implicit-const-int-float-conversion
+    -Wno-shift-negative-value
+    -Wno-implicit-fallthrough
+    -Wno-unused-variable
+    -Wno-cast-function-type
+    -Wno-array-bounds
+    -Wno-tautological-compare
+    -Wno-strict-aliasing
+    -Wno-parentheses
+    $<$<CXX_COMPILER_ID:GNU>:
+        -Wno-memset-elt-size
+        -Wno-maybe-uninitialized
+        -Wno-aggressive-loop-optimizations
+        -Wno-alloc-size-larger-than
+        -Wno-type-limits
+    >
+    $<$<CXX_COMPILER_ID:Clang>:
+        -Wno-self-assign
+        -Wno-implicit-const-int-float-conversion
+        -Wno-sometimes-uninitialized
+    >
+    # cc1plus: error: command line option ‘-Wno-old-style-declaration’ is valid for C/ObjC but not for C++
+    $<$<COMPILE_LANGUAGE:C>:
+        $<$<CXX_COMPILER_ID:GNU>:
+            -Wno-old-style-declaration
+        >
+    >
+    # cc1: error: command line option ‘-Wno-class-memaccess’ is valid for C++/ObjC++ but not for C [-Werror]
+    $<$<COMPILE_LANGUAGE:CXX>:
+        -Wno-redundant-move
+        $<$<CXX_COMPILER_ID:GNU>:
+            -Wno-class-memaccess
+        >
+    >
+)
+
+################################################################################
+
+target_compile_options(libabc-pic PRIVATE
+${ABC_CXX_FLAGS}
+)
+
+# NOT USED but built b/c "add_executable(abc)" which links with this
+target_compile_options(libabc PRIVATE
+${ABC_CXX_FLAGS}
+)
+target_compile_options(abc PRIVATE
+${ABC_CXX_FLAGS}
 )
