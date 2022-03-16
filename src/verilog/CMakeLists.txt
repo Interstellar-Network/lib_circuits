@@ -4,7 +4,14 @@ add_library(verilog_compiler
 
 target_link_libraries(verilog_compiler
     PRIVATE
-    yosys
+    # IMPORTANT: Yosys passes are "auto registered" which means that they are NOT
+    # directly used. Which causes them to be optmized out when static linking
+    # eg "ERROR: No such command: techmap"
+    # We MUST use "whole-archive" when using STATIC to make it work.
+    # -Wl,--whole-archive
+    libyosys
+    # -Wl,--no-whole-archive
+
     absl::strings
     absl::synchronization
     glog::glog
