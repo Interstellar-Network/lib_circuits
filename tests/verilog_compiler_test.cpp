@@ -32,8 +32,8 @@ TEST(VerilogCompilerTest, BasicAdderOk) {
       {absl::StrCat(interstellar::data_dir, "/verilog/adder.v")},
       output_path.generic_string());
 
-  EXPECT_GT(boost::filesystem::file_size(output_path), 900);
-  EXPECT_LT(boost::filesystem::file_size(output_path), 1000);
+  EXPECT_GT(boost::filesystem::file_size(output_path), 850);
+  EXPECT_LT(boost::filesystem::file_size(output_path), 900);
 }
 
 // Used to have an issue where starting multiple CompileVerilog in parallele
@@ -61,10 +61,10 @@ TEST(VerilogCompilerTest, ThreadSafeOk) {
 
   EXPECT_GT(boost::filesystem::file_size(absl::StrCat(
                 output_path.generic_string(), nb_threads - 1, ".blif")),
-            900);
+            850);
   EXPECT_LT(boost::filesystem::file_size(absl::StrCat(
                 output_path.generic_string(), nb_threads - 1, ".blif")),
-            1000);
+            900);
 }
 
 int main(int argc, char** argv) {
