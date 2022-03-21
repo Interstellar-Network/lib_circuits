@@ -51,6 +51,7 @@ set(ABC_CXX_FLAGS
         -Wno-aggressive-loop-optimizations
         -Wno-alloc-size-larger-than
         -Wno-type-limits
+        -Wno-stringop-overflow
     >
     $<$<CXX_COMPILER_ID:Clang>:
         -Wno-self-assign
