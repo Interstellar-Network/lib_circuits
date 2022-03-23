@@ -23,26 +23,51 @@ set(_PROTOBUF_PROTOC $<TARGET_FILE:protoc>)
 # needed for eg build/protos/skcd.pb.h:10:10: fatal error: 'google/protobuf/port_def.inc' file not found
 set(Protobuf_INCLUDE_DIRS ${protobuf_fetch_SOURCE_DIR}/src)
 
-# Proto file
-get_filename_component(hw_proto "./deps/protos/skcd/skcd.proto" ABSOLUTE)
-get_filename_component(hw_proto_path "${hw_proto}" PATH)
+# will gather all the "${CMAKE_BINARY_DIR}/protos/aaa.pb.cc
+# needed for add_library below
+set(PROTO_GENERATED_CPP "")
 
-# Generated sources
-set(hw_proto_srcs "${CMAKE_BINARY_DIR}/protos/skcd.pb.cc")
-set(hw_proto_hdrs "${CMAKE_BINARY_DIR}/protos/skcd.pb.h")
-add_custom_command(
-      OUTPUT "${hw_proto_srcs}" "${hw_proto_hdrs}"
-      COMMAND ${_PROTOBUF_PROTOC}
-      ARGS --cpp_out "${CMAKE_BINARY_DIR}/protos/"
-        -I "${hw_proto_path}"
-        "${hw_proto}"
-      DEPENDS "${hw_proto}")
+function(compile_proto_cpp SRC_PROTO_PATH)
+
+    # Proto file
+    # eg: /home/.../deps/protos/circuits/circuit.proto
+    get_filename_component(hw_proto "${SRC_PROTO_PATH}" ABSOLUTE)
+    # eg /home/.../deps/protos/circuits
+    # needed for Protobuf INCLUDE DIR
+    get_filename_component(hw_proto_path "${hw_proto}" PATH)
+    # eg circuit
+    get_filename_component(src_proto_name "${SRC_PROTO_PATH}" NAME_WE)
+    message(STATUS "hw_proto : ${hw_proto}")
+    message(STATUS "hw_proto_path : ${hw_proto_path}")
+    message(STATUS "src_proto_name : ${src_proto_name}")
+
+    # Generated sources
+    set(hw_proto_srcs
+        "${CMAKE_BINARY_DIR}/protos/${src_proto_name}.pb.cc"
+    )
+    set(hw_proto_hdrs
+        "${CMAKE_BINARY_DIR}/protos/${src_proto_name}.pb.h"
+    )
+    add_custom_command(
+        OUTPUT "${hw_proto_srcs}" "${hw_proto_hdrs}"
+        COMMAND ${_PROTOBUF_PROTOC}
+        ARGS --cpp_out "${CMAKE_BINARY_DIR}/protos/"
+            -I "${hw_proto_path}"
+            "${hw_proto}"
+        DEPENDS "${hw_proto}")
+
+    set(PROTO_GENERATED_CPP "${PROTO_GENERATED_CPP};${hw_proto_srcs};" PARENT_SCOPE)
+endfunction(compile_proto_cpp)
+
+################################################################################
+
+compile_proto_cpp("./deps/protos/skcd/skcd.proto")
 
 ################################################################################
 
 # add a library to avoid "polluting" global include/flags with proto
 add_library(interstellar_protos
-    ${hw_proto_srcs}
+    ${PROTO_GENERATED_CPP}
 )
 
 target_include_directories(interstellar_protos
