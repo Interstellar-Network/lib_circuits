@@ -47,6 +47,8 @@ add_google_test(abc_test "abc-wrapper test_resources absl::strings utils_files")
 gtest_discover_tests(abc_test)
 add_google_test(full_pipeline_test "circuit_lib test_resources absl::strings utils_files")
 gtest_discover_tests(full_pipeline_test)
+add_google_test(segments2pixels_test "segments2pixels test_resources absl::strings utils_files gmock")
+gtest_discover_tests(segments2pixels_test)
 add_google_test(verilog_compiler_test "verilog_compiler resources absl::strings utils_files")
 gtest_discover_tests(verilog_compiler_test)
 

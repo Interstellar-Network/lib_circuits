@@ -36,13 +36,15 @@ std::string GenerateSkcd(
  * Specialization of GenerateSkcd for our own "circuit-display.v"
  */
 void GenerateDisplaySkcd(boost::filesystem::path skcd_output_path,
-                         u_int32_t width, u_int32_t height);
+                         u_int32_t width, u_int32_t height, uint32_t nb_digits,
+                         bool is_message);
 
 /**
  * Variant of "GenerateDisplaySkcd" that returns a buffer instead of writing to
  * a file.
  */
-std::string GenerateDisplaySkcd(u_int32_t width, u_int32_t height);
+std::string GenerateDisplaySkcd(u_int32_t width, u_int32_t height,
+                                uint32_t nb_digits, bool is_message);
 
 }  // namespace CircuitPipeline
 

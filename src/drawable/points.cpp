@@ -12,18 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#include "points.h"
 
-#include <vector>
-
-#include "rle.h"
+#include <cassert>
 
 namespace interstellar {
 
-namespace utils {
+namespace drawable {
 
-std::vector<RLE_int8_t> compress_rle(const std::vector<int32_t>& vect);
+Point2DInPixels::Point2DInPixels(unsigned int x, unsigned int y) : x(x), y(y) {}
 
-}  // namespace utils
+Point2DRelative::Point2DRelative(float x, float y) : x(x), y(y) {
+  assert(x >= 0.0f && x <= 1.0f && y >= 0.0f && y <= 1.0f);
+}
+
+}  //   namespace drawable
 
 }  // namespace interstellar

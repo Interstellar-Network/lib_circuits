@@ -14,16 +14,28 @@
 
 #pragma once
 
-#include <vector>
-
-#include "rle.h"
+#include "drawable.h"
 
 namespace interstellar {
 
-namespace utils {
+namespace drawable {
 
-std::vector<RLE_int8_t> compress_rle(const std::vector<int32_t>& vect);
+class DrawableDigitPng : public IDrawableSegmentedDigitRelCoordsLocal {
+ public:
+  DrawableDigitPng();
 
-}  // namespace utils
+  // Disable copy semantics.
+  DrawableDigitPng(const DrawableDigitPng&) = delete;
+  DrawableDigitPng& operator=(const DrawableDigitPng&) = delete;
+
+  virtual SegmentID GetSegmentID(
+      Point2DRelative rel_coords_local) const override;
+
+ private:
+  u_int32_t png_width_, png_height_;
+  std::vector<SegmentID> img_seg_ids_;
+};
+
+}  //   namespace drawable
 
 }  // namespace interstellar

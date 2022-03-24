@@ -183,8 +183,8 @@ void CompileVerilog(const std::vector<std::string_view> &inputs_v_full_paths,
   // that into ABC externally if you want to use ABC to convert your design into
   // another format."
 
-  // proc could be needed for segment2pixels, depending on the way/if the 0s are
-  // run-length encoded in some way
+  // proc could be needed for segments2pixels, depending on the way/if the 0s
+  // are run-length encoded in some way
   // TODO test and bench(including circuit_size and eval speed): techmap; opt;
   // proc; etc (old size 2) techmap; opt;    real    0m2.573s user    0m2.441s
   // techmap;         real    0m2.060s user    0m1.906s

@@ -14,12 +14,12 @@
 
 #pragma once
 
+#include <absl/container/flat_hash_map.h>
+
 #include <cmath>
-#include <map>
 #include <memory>
 #include <random>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #include "circuit_data.h"
@@ -41,13 +41,17 @@ class Label {
  */
 class BlifParser {
  public:
-  BlifParser() { random_ = std::make_shared<Random>(); }
+  /**
+   * config: usually a variation of the Verilog `define
+   */
+  BlifParser(absl::flat_hash_map<std::string, uint32_t> &&config);
 
   // DEV/TEST
   // Used during tests to use a fake PRNG, needed to have a determistic output
   // of Parse*() with "zero=True"
   // TODO remove when NOT a test build
-  BlifParser(std::shared_ptr<RandomInterface> random) : random_(random) {}
+  BlifParser(absl::flat_hash_map<std::string, uint32_t> &&config,
+             std::shared_ptr<RandomInterface> random);
 
   // Disable copy semantics.
   BlifParser(const BlifParser &) = delete;
@@ -82,6 +86,10 @@ class BlifParser {
 
   const CircuitData &GetCircuitData() const { return circuit_data_; }
 
+  const absl::flat_hash_map<std::string, uint32_t> &GetConfig() const {
+    return config_;
+  }
+
  private:
   // Basic deps injection to use a fake PRNG during tests
   std::shared_ptr<RandomInterface> random_;
@@ -104,6 +112,8 @@ class BlifParser {
 
   // TODO? but does it make sense when using an temporary file .skcd?
   CircuitData circuit_data_;
+
+  absl::flat_hash_map<std::string, uint32_t> config_;
 
   /**
    * "Unlike other string types, you should pass string_view by value just like

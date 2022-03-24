@@ -8,6 +8,7 @@ add_subdirectory(utils/encode_rle/)
 add_subdirectory(utils/files/)
 add_subdirectory(blif)
 add_subdirectory(skcd)
+add_subdirectory(drawable)
 
 ################################################################################
 
