@@ -22,6 +22,8 @@ ABSL_FLAG(std::string, output_skcd_path, "output.skcd.pb.bin",
           "output file dir");
 ABSL_FLAG(u_int32_t, width, 1280 / 2, "width");
 ABSL_FLAG(u_int32_t, height, 720 / 2, "height");
+ABSL_FLAG(u_int32_t, nb_digits, 2, "nb_digits");
+ABSL_FLAG(bool, is_message, true, "is_message");
 
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
@@ -30,9 +32,11 @@ int main(int argc, char** argv) {
   auto output_skcd_path = absl::GetFlag(FLAGS_output_skcd_path);
   auto width = absl::GetFlag(FLAGS_width);
   auto height = absl::GetFlag(FLAGS_height);
+  auto nb_digits = absl::GetFlag(FLAGS_nb_digits);
+  auto is_message = absl::GetFlag(FLAGS_is_message);
 
-  interstellar::CircuitPipeline::GenerateDisplaySkcd(output_skcd_path, width,
-                                                     height);
+  interstellar::CircuitPipeline::GenerateDisplaySkcd(
+      output_skcd_path, width, height, nb_digits, is_message);
 
   return 0;
 }

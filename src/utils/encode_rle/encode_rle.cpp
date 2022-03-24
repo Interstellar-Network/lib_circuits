@@ -1,6 +1,7 @@
 #include "encode_rle.h"
 
 #include <cassert>
+#include <stdexcept>
 
 namespace interstellar {
 
@@ -16,7 +17,7 @@ RLE_int8_t::RLE_int8_t(u_int32_t size, int8_t value)
  *
  * WARNING: the values should fit on 8 bits signed, but the counts WILL NOT!
  */
-std::vector<RLE_int8_t> compress_rle(const std::vector<int8_t>& vect) {
+std::vector<RLE_int8_t> compress_rle(const std::vector<int32_t>& vect) {
   const size_t vect_size = vect.size();
 
   std::vector<RLE_int8_t> result_rle;
@@ -29,6 +30,11 @@ std::vector<RLE_int8_t> compress_rle(const std::vector<int8_t>& vect) {
     while ((i + 1 < vect_size) && (vect[i] == vect[i + 1])) {
       count++;
       i++;
+    }
+
+    // CHECK RLE_int8_t uses 8bits for the value
+    if (vect[i] > std::numeric_limits<int8_t>::max()) {
+      throw std::range_error("compress_rle: value does not fit on 8bits");
     }
 
     result_rle.emplace_back(count, vect[i]);

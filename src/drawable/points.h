@@ -14,16 +14,32 @@
 
 #pragma once
 
-#include <vector>
-
-#include "rle.h"
-
 namespace interstellar {
 
-namespace utils {
+namespace drawable {
 
-std::vector<RLE_int8_t> compress_rle(const std::vector<int32_t>& vect);
+/**
+ * Point(2D) in pixel coordinates
+ */
+class Point2DInPixels {
+ public:
+  unsigned int x, y;
 
-}  // namespace utils
+  Point2DInPixels(unsigned int x, unsigned int y);
+};
+
+/**
+ * Point(2D) in relative coordinates
+ */
+class Point2DRelative {
+ public:
+  float x, y;
+
+  Point2DRelative(float x, float y);
+
+  Point2DRelative() { x = y = 0.f; }
+};
+
+}  //   namespace drawable
 
 }  // namespace interstellar

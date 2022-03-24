@@ -10,6 +10,9 @@ target_include_directories(blif_parser
 )
 
 target_link_libraries(blif_parser
+    PUBLIC
+    absl::flat_hash_map
+
     PRIVATE
     fmt
     xxhash

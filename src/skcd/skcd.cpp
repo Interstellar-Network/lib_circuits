@@ -64,6 +64,10 @@ void PrepareSkcdPb(const interstellar::BlifParser &blif_parser,
   skcd_pb->mutable_circuit_data()->mutable_input_gate_count()->Assign(
       circuit_data.input_gate_count.begin(),
       circuit_data.input_gate_count.end());
+
+  for (auto const &[key, val] : blif_parser.GetConfig()) {
+    (*skcd_pb->mutable_config())[key] = val;
+  }
 }
 
 }  // anonymous namespace
