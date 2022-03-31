@@ -60,15 +60,22 @@ uint32_t IDrawableSegmentedDigitRelCoordsLocal::GetNbSegments() const {
   return nb_segments_per_digit_;
 }
 
-Drawable::Drawable(std::unique_ptr<const RelativeBBoxInterface>&& where_to_draw,
-                   const IDrawableSegmentedDigitRelCoordsLocal& what_to_draw)
+template <typename DrawableWhereT>
+Drawable<DrawableWhereT>::Drawable(
+    DrawableWhereT&& where_to_draw,
+    const IDrawableSegmentedDigitRelCoordsLocal& what_to_draw)
     : where_to_draw_(std::move(where_to_draw)), what_to_draw_(what_to_draw) {}
 
-const IDrawableSegmentedDigitRelCoordsLocal& Drawable::What() const {
+template <typename DrawableWhereT>
+const IDrawableSegmentedDigitRelCoordsLocal& Drawable<DrawableWhereT>::What()
+    const {
   return what_to_draw_;
 }
 
-const RelativeBBoxInterface& Drawable::Where() const { return *where_to_draw_; }
+template <typename DrawableWhereT>
+const DrawableWhereT& Drawable<DrawableWhereT>::Where() const {
+  return where_to_draw_;
+}
 
 /**
  * NOTE: try NOT to make this part too Verilog-specific because that way we can
@@ -78,8 +85,10 @@ const RelativeBBoxInterface& Drawable::Where() const { return *where_to_draw_; }
  * pixel(x2,y2) = segment1
  * and assume the UNreturned pixel are background(ie NOT a SegmentID)
  */
-std::vector<SegmentID> Draw(const std::vector<drawable::Drawable>& drawables,
-                            u_int32_t width, u_int32_t height) {
+template <typename DrawableWhereT>
+std::vector<SegmentID> Draw(
+    const std::vector<drawable::Drawable<DrawableWhereT>>& drawables,
+    u_int32_t width, u_int32_t height) {
   std::vector<SegmentID> img_seg_ids;
   img_seg_ids.reserve(width * height);
 
@@ -132,6 +141,12 @@ std::vector<SegmentID> Draw(const std::vector<drawable::Drawable>& drawables,
   assert(img_seg_ids.size() == width * height && "Draw: missing pixels!");
   return img_seg_ids;
 }
+
+// "explicit instantiation of all the types the template will be used with"
+template class Drawable<RelativeBBox>;
+template std::vector<SegmentID> Draw<RelativeBBox>(
+    const std::vector<drawable::Drawable<RelativeBBox>>& drawables,
+    u_int32_t width, u_int32_t height);
 
 }  //   namespace drawable
 

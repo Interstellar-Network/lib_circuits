@@ -32,9 +32,10 @@
 
 namespace interstellar {
 
-Segments2Pixels::Segments2Pixels(
+template <typename DrawableWhereT>
+Segments2Pixels<DrawableWhereT>::Segments2Pixels(
     uint32_t width, uint32_t height,
-    const std::vector<drawable::Drawable>& drawables)
+    const std::vector<drawable::Drawable<DrawableWhereT>>& drawables)
     : width_(width), height_(height), drawables_(drawables) {
   uint32_t nb_digits = drawables_.size();
 
@@ -76,7 +77,8 @@ Segments2Pixels::Segments2Pixels(
              {"SEGMENTS_TYPE", static_cast<uint32_t>(segments_type)}};
 }
 
-std::string Segments2Pixels::GenerateVerilog() const {
+template <typename DrawableWhereT>
+std::string Segments2Pixels<DrawableWhereT>::GenerateVerilog() const {
   // Generate the complete bitmap, then compute the SegmentID for each pixel
   // Previously it was done is the ctor then stored in class member but it is
   // only used here so no point in doing that
@@ -157,7 +159,8 @@ std::string Segments2Pixels::GenerateVerilog() const {
   `define RNDSIZE 9
   `define BITMAP_NB_SEGMENTS 28
  */
-std::string Segments2Pixels::GetDefines() const {
+template <typename DrawableWhereT>
+std::string Segments2Pixels<DrawableWhereT>::GetDefines() const {
   auto verilog_defines = verilog::Defines();
   // NOTE: probably NOT all the config keys are needed on the Verilog side
   for (auto const& [key, val] : config_) {
@@ -171,9 +174,13 @@ std::string Segments2Pixels::GetDefines() const {
  * We could DRY with GetDefines but most of the keys in config are NOT needed on
  * the Verilog side.
  */
-const absl::flat_hash_map<std::string, uint32_t>& Segments2Pixels::GetConfig()
-    const {
+template <typename DrawableWhereT>
+const absl::flat_hash_map<std::string, uint32_t>&
+Segments2Pixels<DrawableWhereT>::GetConfig() const {
   return config_;
 }
+
+// "explicit instantiation of all the types the template will be used with"
+template class Segments2Pixels<drawable::RelativeBBox>;
 
 }  // namespace interstellar

@@ -36,14 +36,12 @@ using interstellar::drawable::RelativeBBox;
 TEST(Segments2PixelsTest, BasicDisplayOk) {
   // TODO get that from a static? or better to let the caller do that?
   DrawableDigitPng seven_segs_png;
-  std::vector<Drawable> drawables;
+  std::vector<Drawable<RelativeBBox>> drawables;
   drawables.emplace_back(
-      std::make_unique<RelativeBBox>(Point2DRelative(0.25f, 0.1f),
-                                     Point2DRelative(0.45f, 0.9f)),
+      RelativeBBox(Point2DRelative(0.25f, 0.1f), Point2DRelative(0.45f, 0.9f)),
       seven_segs_png);
   drawables.emplace_back(
-      std::make_unique<RelativeBBox>(Point2DRelative(0.55f, 0.1f),
-                                     Point2DRelative(0.75f, 0.9f)),
+      RelativeBBox(Point2DRelative(0.55f, 0.1f), Point2DRelative(0.75f, 0.9f)),
       seven_segs_png);
 
   // ~ minimal size that still displays all the segments in lib_garble's eval

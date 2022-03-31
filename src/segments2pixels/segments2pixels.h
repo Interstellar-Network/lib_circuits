@@ -34,6 +34,7 @@ namespace interstellar {
  * NOTE: b/c this class DOES NOT use Verilog/ABC, all is done in buffers(eg
  * string) instead of using files
  */
+template <typename DrawableWhereT>
 class Segments2Pixels {
  public:
   /**
@@ -47,8 +48,9 @@ class Segments2Pixels {
    * what we draw here matches the Packmsg.
    */
   // TODO Span for "drawables"
-  Segments2Pixels(uint32_t width, uint32_t height,
-                  const std::vector<drawable::Drawable>& drawables);
+  Segments2Pixels(
+      uint32_t width, uint32_t height,
+      const std::vector<drawable::Drawable<DrawableWhereT>>& drawables);
 
   // Disable copy semantics.
   Segments2Pixels(const Segments2Pixels&) = delete;
@@ -66,7 +68,7 @@ class Segments2Pixels {
 
  private:
   uint32_t width_ = 0, height_ = 0, nb_segments_ = 0;
-  const std::vector<drawable::Drawable>& drawables_;
+  const std::vector<drawable::Drawable<DrawableWhereT>>& drawables_;
 
   absl::flat_hash_map<std::string, uint32_t> config_;
 };
