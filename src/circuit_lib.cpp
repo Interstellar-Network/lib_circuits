@@ -18,6 +18,7 @@
 
 #include "abc_wrapper/abc_wrapper.h"
 #include "blif/blif_parser.h"
+#include "drawable/drawable.h"
 #include "drawable/drawable_digit_png.h"
 #include "resources.h"
 #include "segments2pixels/segments2pixels.h"
@@ -65,11 +66,34 @@ interstellar::BlifParser GenerateBlifBlif(
   return GenerateBlifBlif(verilog_inputs_paths, tmp_dir, std::move(config));
 }
 
+/**
+ * IMPORTANT the "what to draw" MUST be kept alive for the whole duration of
+ * Segments2Pixels!
+ * For now we use a static b/c that way we also avoid re-instantiating during
+ * each circuit gen. Typically those are heavy to instantiate(eg parsing a png,
+ * etc)
+ */
+const interstellar::drawable::IDrawableSegmentedDigitRelCoordsLocal &
+GetDrawableFromDigitType(interstellar::circuits::DisplayDigitType digit_type) {
+  switch (digit_type) {
+    case interstellar::circuits::DisplayDigitType::seven_segments_png:
+      // TOREMOVE this SHOULD not work, it MUST be kept alive for
+      // Segments2Pixels
+      static interstellar::drawable::DrawableDigitPng seven_segs_png;
+      return seven_segs_png;
+      break;
+  }
+
+  // GCC: "error: control reaches end of non-void function
+  // [-Werror=return-type]"
+  __builtin_unreachable();
+}
+
 }  // namespace
 
 namespace interstellar {
 
-namespace CircuitPipeline {
+namespace circuits {
 
 // TODO how to handle InitGoogleLogging ?
 
@@ -112,59 +136,32 @@ std::string GenerateSkcd(
   return GenerateSkcd(verilog_inputs_paths, tmp_dir, std::move(config));
 }
 
-void GenerateDisplaySkcd(boost::filesystem::path skcd_output_path,
-                         u_int32_t width, u_int32_t height, uint32_t nb_digits,
-                         bool is_message) {
+void GenerateDisplaySkcd(
+    boost::filesystem::path skcd_output_path, u_int32_t width, u_int32_t height,
+    circuits::DisplayDigitType digit_type,
+    std::vector<std::tuple<float, float, float, float>> &&digits_bboxes) {
   auto result_skcd_buf =
-      GenerateDisplaySkcd(width, height, nb_digits, is_message);
+      GenerateDisplaySkcd(width, height, digit_type, std::move(digits_bboxes));
 
   utils::WriteToFile(skcd_output_path, result_skcd_buf);
 }
 
-std::string GenerateDisplaySkcd(u_int32_t width, u_int32_t height,
-                                uint32_t nb_digits, bool is_message) {
+std::string GenerateDisplaySkcd(
+    u_int32_t width, u_int32_t height, DisplayDigitType digit_type,
+    std::vector<std::tuple<float, float, float, float>> &&digits_bboxes) {
   auto tmp_dir = utils::TempDir();
 
-  // [1] generate Verilog segments2pixels.v
-  // TODO get that from a static? or better to let the caller do that?
-  drawable::DrawableDigitPng seven_segs_png;
+  const auto &what_to_draw = GetDrawableFromDigitType(digit_type);
   std::vector<drawable::Drawable<drawable::RelativeBBox>> drawables;
-
-  // TODO proper offset,margin,etc
-  if (is_message) {
-    switch (nb_digits) {
-      case 0:
-        // 'pin_only' transactions: no OTP on the messge
-        throw std::logic_error("GenerateDisplaySkcd NO OTP UnimplementedError");
-        break;
-
-      case 2:
-        drawables.emplace_back(
-            drawable::RelativeBBox(drawable::Point2DRelative(0.25f, 0.1f),
-                                   drawable::Point2DRelative(0.45f, 0.9f)),
-            seven_segs_png);
-        drawables.emplace_back(
-            drawable::RelativeBBox(drawable::Point2DRelative(0.55f, 0.1f),
-                                   drawable::Point2DRelative(0.75f, 0.9f)),
-            seven_segs_png);
-        break;
-
-      default:
-        throw std::runtime_error(
-            "GenerateSegmentToPixelVerilog : unsupported msgsize : " +
-            std::to_string(nb_digits));
-    }
-
-  } else {
-    for (int i = 0; i < 10; i++) {
-      drawables.emplace_back(
-          drawable::RelativeBBox(
-              drawable::Point2DRelative(0.1f * i, 0.0f),
-              drawable::Point2DRelative(0.1f * (i + 1), 1.0f)),
-          seven_segs_png);
-    }
+  for (auto &&digit_bbox : digits_bboxes) {
+    drawables.emplace_back(
+        drawable::RelativeBBox(std::get<0>(digit_bbox), std::get<1>(digit_bbox),
+                               std::get<2>(digit_bbox),
+                               std::get<3>(digit_bbox)),
+        what_to_draw);
   }
 
+  // [1] generate Verilog segments2pixels.v
   auto segments2pixels = Segments2Pixels(width, height, drawables);
   auto segments2pixels_v_str = segments2pixels.GenerateVerilog();
   auto config = segments2pixels.GetConfig();
@@ -193,6 +190,6 @@ std::string GenerateDisplaySkcd(u_int32_t width, u_int32_t height,
   return result_skcd_buf;
 }
 
-}  // namespace CircuitPipeline
+}  // namespace circuits
 
 }  // namespace interstellar

@@ -22,6 +22,11 @@ namespace drawable {
 
 RelativeBBoxInterface::RelativeBBoxInterface() {}
 
+RelativeBBox::RelativeBBox(float lower_left_x, float lower_left_y,
+                           float upper_right_x, float upper_right_y)
+    : RelativeBBox(Point2DRelative(lower_left_x, lower_left_y),
+                   Point2DRelative(upper_right_x, upper_right_y)) {}
+
 RelativeBBox::RelativeBBox(Point2DRelative lower_left_world,
                            Point2DRelative upper_right_world)
     : lower_left_world_(lower_left_world),

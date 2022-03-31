@@ -18,6 +18,8 @@
 
 #include "circuit_lib.h"
 
+using namespace interstellar;
+
 ABSL_FLAG(std::string, output_skcd_path, "output.skcd.pb.bin",
           "output file .skcd");
 ABSL_FLAG(std::string, input_verilog_path, "", "input file .v");
@@ -37,8 +39,7 @@ int main(int argc, char** argv) {
     throw std::invalid_argument("required: --input_verilog_path=path/to.v");
   }
 
-  interstellar::CircuitPipeline::GenerateSkcd(output_skcd_path,
-                                              {input_verilog_path});
+  circuits::GenerateSkcd(output_skcd_path, {input_verilog_path});
 
   return 0;
 }

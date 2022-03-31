@@ -18,6 +18,8 @@
 
 #include "circuit_lib.h"
 
+using namespace interstellar;
+
 ABSL_FLAG(std::string, output_skcd_path, "output.skcd.pb.bin",
           "output file dir");
 ABSL_FLAG(u_int32_t, width, 1280 / 2, "width");
@@ -35,8 +37,27 @@ int main(int argc, char** argv) {
   auto nb_digits = absl::GetFlag(FLAGS_nb_digits);
   auto is_message = absl::GetFlag(FLAGS_is_message);
 
-  interstellar::CircuitPipeline::GenerateDisplaySkcd(
-      output_skcd_path, width, height, nb_digits, is_message);
+  std::vector<std::tuple<float, float, float, float>> digits_bboxes;
+
+  // TODO proper offset,margin,etc
+  if (is_message) {
+    if (nb_digits == 2) {
+      digits_bboxes.emplace_back(0.25f, 0.1f, 0.45f, 0.9f);
+      digits_bboxes.emplace_back(0.55f, 0.1f, 0.75f, 0.9f);
+    } else {
+      throw std::runtime_error("NotImplemented nb_digits == " +
+                               std::to_string(nb_digits));
+    }
+
+  } else {
+    for (int i = 0; i < 10; i++) {
+      digits_bboxes.emplace_back(0.1f * i, 0.0f, 0.1f * (i + 1), 1.0f);
+    }
+  }
+
+  circuits::GenerateDisplaySkcd(output_skcd_path, width, height,
+                                circuits::DisplayDigitType::seven_segments_png,
+                                std::move(digits_bboxes));
 
   return 0;
 }

@@ -74,6 +74,12 @@ class RelativeBBox : public RelativeBBoxInterface {
  public:
   RelativeBBox(Point2DRelative lower_left, Point2DRelative upper_right);
 
+  /**
+   * Useful to emplace_back directly into a vector<RelativeBBox>
+   */
+  RelativeBBox(float lower_left_x, float lower_left_y, float upper_right_x,
+               float upper_right_y);
+
   virtual bool IsInBBox(Point2DRelative rel_coords_world) const override;
 
   virtual Point2DRelative GetRelCoordsLocalFromRelCoordsWorld(
