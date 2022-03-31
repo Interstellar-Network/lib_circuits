@@ -18,7 +18,7 @@
 
 namespace interstellar {
 
-namespace CircuitPipeline {
+namespace circuits {
 
 /**
  * GenerateSkcd: variant that writes the .skcd to the target path
@@ -33,19 +33,58 @@ std::string GenerateSkcd(
     const std::vector<std::string_view> &verilog_inputs_paths);
 
 /**
- * Specialization of GenerateSkcd for our own "circuit-display.v"
+ * See also DigitSegmentsType; but that is more a "type" vs implementation
+ * thing. eg we would have two separate implementation that are the same
+ * DigitSegmentsType::seven_segs using different png/different font/etc
+ * So it is better to use a separate enum
  */
-void GenerateDisplaySkcd(boost::filesystem::path skcd_output_path,
-                         u_int32_t width, u_int32_t height, uint32_t nb_digits,
-                         bool is_message);
+enum class DisplayDigitType { seven_segments_png };
+
+/**
+ * Specialization of GenerateSkcd for our own "circuit-display.v"
+ *
+ * @param digits_bboxes vector of ~drawable::RelativeBBox passed as pair<pair>
+ * eg digits_bboxes =
+ * RelativeBBox(Point2DRelative(0.25f, 0.1f), Point2DRelative(0.45f, 0.9f))
+ * passed as {{0.25f, 0.1f},{0.45f, 0.9f}}
+ * This is done in order to avoid exposing
+ * #include "drawable/drawable.h" publicly
+ */
+void GenerateDisplaySkcd(
+    boost::filesystem::path skcd_output_path, u_int32_t width, u_int32_t height,
+    DisplayDigitType digit_type,
+    std::vector<std::tuple<float, float, float, float>> &&digits_bboxes);
 
 /**
  * Variant of "GenerateDisplaySkcd" that returns a buffer instead of writing to
  * a file.
- */
-std::string GenerateDisplaySkcd(u_int32_t width, u_int32_t height,
-                                uint32_t nb_digits, bool is_message);
+ *
+ * example of setup for a "2 digits OTP message" vs "pinpad":
 
-}  // namespace CircuitPipeline
+  std::vector<std::tuple<float, float, float, float>> digits_bboxes;
+
+  // TODO proper offset,margin,etc
+  if (is_message) {
+    if (nb_digits == 2) {
+      digits_bboxes.emplace_back(0.25f, 0.1f, 0.45f, 0.9f);
+      digits_bboxes.emplace_back(0.55f, 0.1f, 0.75f, 0.9f);
+    } else {
+      throw std::runtime_error("NotImplemented nb_digits == " +
+                               std::to_string(nb_digits));
+    }
+  } else {
+    for (int i = 0; i < 10; i++) {
+      digits_bboxes.emplace_back(0.1f * i, 0.0f, 0.1f * (i + 1), 1.0f);
+    }
+  }
+
+ * You can obvviously make the number of digits dynamic, adjust the offset,
+ * margin, etc
+ */
+std::string GenerateDisplaySkcd(
+    u_int32_t width, u_int32_t height, DisplayDigitType digit_type,
+    std::vector<std::tuple<float, float, float, float>> &&digits_bboxes);
+
+}  // namespace circuits
 
 }  // namespace interstellar

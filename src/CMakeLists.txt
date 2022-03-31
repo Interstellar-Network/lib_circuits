@@ -19,10 +19,13 @@ add_library(circuit_lib
 )
 
 target_link_libraries(circuit_lib
+    PUBLIC
+
     PRIVATE
     absl::strings
 
     abc-wrapper
+    drawable
     segments2pixels
     verilog_compiler
     resources

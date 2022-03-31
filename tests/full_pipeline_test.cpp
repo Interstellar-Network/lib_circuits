@@ -24,39 +24,38 @@
 #include "test_resources.h"
 #include "utils/files/utils_files.h"
 
+using namespace interstellar;
+
 TEST(FullPipelineTest, BasicAdderOk) {
-  auto tmp_dir = interstellar::utils::TempDir();
-  auto verilog_input_path =
-      absl::StrCat(interstellar::data_dir, "/verilog/adder.v");
+  auto tmp_dir = utils::TempDir();
+  auto verilog_input_path = absl::StrCat(data_dir, "/verilog/adder.v");
   auto output_skcd_path = tmp_dir.GetPath() / "output.skcd";
 
-  interstellar::CircuitPipeline::GenerateSkcd(output_skcd_path,
-                                              {
-                                                  verilog_input_path,
-                                              });
+  circuits::GenerateSkcd(output_skcd_path, {
+                                               verilog_input_path,
+                                           });
 
   // TODO ideally we would want to compare functionally
   // ie are those the same gates? inputs? outputs? etc
   EXPECT_EQ(boost::filesystem::file_size(output_skcd_path), 80);
-  auto output_str = interstellar::utils::ReadFile(output_skcd_path);
-  auto expected_str = interstellar::utils::ReadFile(
-      absl::StrCat(interstellar::test::test_data_dir, "/result_adder.skcd"));
+  auto output_str = utils::ReadFile(output_skcd_path);
+  auto expected_str =
+      utils::ReadFile(absl::StrCat(test::test_data_dir, "/result_adder.skcd"));
   EXPECT_EQ(output_str, expected_str);
 }
 
 TEST(FullPipelineTest, ThreadSafeOk) {
   int nb_threads = 20;
 
-  auto tmp_dir = interstellar::utils::TempDir();
-  auto verilog_input_path =
-      absl::StrCat(interstellar::data_dir, "/verilog/adder.v");
+  auto tmp_dir = utils::TempDir();
+  auto verilog_input_path = absl::StrCat(data_dir, "/verilog/adder.v");
   auto output_path = tmp_dir.GetPath() / "output";
 
   std::vector<std::thread> threads(nb_threads);
   // spawn n threads:
   for (int i = 0; i < nb_threads; i++) {
     threads[i] = std::thread([&verilog_input_path, &output_path, i] {
-      interstellar::CircuitPipeline::GenerateSkcd(
+      circuits::GenerateSkcd(
           absl::StrCat(output_path.generic_string(), i, ".skcd"),
           {
               verilog_input_path,
