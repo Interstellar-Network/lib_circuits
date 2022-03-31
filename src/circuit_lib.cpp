@@ -117,23 +117,37 @@ std::string GenerateSkcd(
 
 /**
  * [internal]
- * Overload[1] to call the main "GenerateSkcd" reusing a given TempDir
  */
 void GenerateSkcd(boost::filesystem::path skcd_output_path,
                   const std::vector<std::string_view> &verilog_inputs_paths) {
   auto tmp_dir = utils::TempDir();
-  GenerateSkcd(skcd_output_path, verilog_inputs_paths, tmp_dir);
+  auto blif_parser = GenerateBlifBlif(verilog_inputs_paths, tmp_dir);
+
+  interstellar::skcd::WriteToFile(skcd_output_path, blif_parser);
 }
 
 /**
  * [internal]
- * Overload[2] to call the main "GenerateSkcd" reusing a given TempDir
  */
 std::string GenerateSkcd(
     const std::vector<std::string_view> &verilog_inputs_paths,
     absl::flat_hash_map<std::string, uint32_t> &&config) {
   auto tmp_dir = utils::TempDir();
-  return GenerateSkcd(verilog_inputs_paths, tmp_dir, std::move(config));
+  auto blif_parser =
+      GenerateBlifBlif(verilog_inputs_paths, tmp_dir, std::move(config));
+
+  return interstellar::skcd::Serialize(blif_parser);
+}
+
+/**
+ * IMPORTANT: used by api_circuits
+ */
+std::string GenerateSkcd(
+    const std::vector<std::string_view> &verilog_inputs_paths) {
+  auto tmp_dir = utils::TempDir();
+  auto blif_parser = GenerateBlifBlif(verilog_inputs_paths, tmp_dir);
+
+  return interstellar::skcd::Serialize(blif_parser);
 }
 
 void GenerateDisplaySkcd(

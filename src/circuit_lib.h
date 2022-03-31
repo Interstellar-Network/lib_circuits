@@ -28,6 +28,7 @@ void GenerateSkcd(boost::filesystem::path skcd_output_path,
 
 /**
  * GenerateSkcd: variant that return a .skcd protobuf buffer
+ * IMPORTANT: used by api_circuits
  */
 std::string GenerateSkcd(
     const std::vector<std::string_view> &verilog_inputs_paths);
