@@ -101,19 +101,22 @@ class IDrawableSegmentedDigitRelCoordsLocal {
  * Binds the WHAT to draw and the WHERE.
  * This is what is given to Segments2Pixels
  */
+template <typename DrawableWhereT>  // DrawableWhereT: should be derived from
+                                    // RelativeBBoxInterface
 class Drawable {
  public:
+  static_assert(std::is_base_of_v<RelativeBBoxInterface, DrawableWhereT>,
+                "Drawable<DrawableWhereT> DrawableWhereT MUST derived from "
+                "RelativeBBoxInterface");
+
   /**
    * WARNING you MUST keep "what_to_draw" alive for the whole lifetime of
    * durable!
-   * "where_to_draw" is a unique_ptr b/c typically the position is computed in a
-   * for loop or a switch so that way it can be emplaced directly into the
-   * vector<Drawable>
    * But "what_to_draw" is JUST A REFERENCE!
    * Usually you will want to keep it around and reuse b/w circuit gen (eg use a
    * local static?)
    */
-  Drawable(std::unique_ptr<const RelativeBBoxInterface>&& where_to_draw,
+  Drawable(DrawableWhereT&& where_to_draw,
            const IDrawableSegmentedDigitRelCoordsLocal& what_to_draw);
 
   // Disable copy semantics.
@@ -127,19 +130,21 @@ class Drawable {
   Drawable(Drawable&&) = default;
 
   const IDrawableSegmentedDigitRelCoordsLocal& What() const;
-  const RelativeBBoxInterface& Where() const;
+  const DrawableWhereT& Where() const;
 
  private:
   // TODO const? but not really possible
-  std::unique_ptr<const RelativeBBoxInterface> where_to_draw_;
+  DrawableWhereT where_to_draw_;
   const IDrawableSegmentedDigitRelCoordsLocal& what_to_draw_;
 };
 
 /**
  * return: a bitmap(-like) image whose individual "pixels" are SegmentID
  */
-std::vector<SegmentID> Draw(const std::vector<drawable::Drawable>& drawables,
-                            u_int32_t width, u_int32_t height);
+template <typename DrawableWhereT>
+std::vector<SegmentID> Draw(
+    const std::vector<drawable::Drawable<DrawableWhereT>>& drawables,
+    u_int32_t width, u_int32_t height);
 
 }  //   namespace drawable
 

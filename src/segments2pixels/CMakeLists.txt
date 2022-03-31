@@ -5,6 +5,7 @@ add_library(segments2pixels
 target_link_libraries(segments2pixels
     PUBLIC
     absl::flat_hash_set
+    drawable
 
     PRIVATE
     absl::strings
@@ -13,7 +14,6 @@ target_link_libraries(segments2pixels
 
     utils_rle
     verilog_defines
-    drawable
 )
 
 target_include_directories(segments2pixels

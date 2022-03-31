@@ -52,6 +52,9 @@ class RelativeBBoxInterface {
   // Disable copy semantics.
   RelativeBBoxInterface(const RelativeBBoxInterface&) = delete;
   RelativeBBoxInterface& operator=(const RelativeBBoxInterface&) = delete;
+  // MOVE ONLY
+  RelativeBBoxInterface& operator=(RelativeBBoxInterface&& other) = default;
+  RelativeBBoxInterface(RelativeBBoxInterface&& other) = default;
 
   virtual ~RelativeBBoxInterface() {}
 

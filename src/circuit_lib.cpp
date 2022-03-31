@@ -128,7 +128,7 @@ std::string GenerateDisplaySkcd(u_int32_t width, u_int32_t height,
   // [1] generate Verilog segments2pixels.v
   // TODO get that from a static? or better to let the caller do that?
   drawable::DrawableDigitPng seven_segs_png;
-  std::vector<drawable::Drawable> drawables;
+  std::vector<drawable::Drawable<drawable::RelativeBBox>> drawables;
 
   // TODO proper offset,margin,etc
   if (is_message) {
@@ -139,14 +139,14 @@ std::string GenerateDisplaySkcd(u_int32_t width, u_int32_t height,
         break;
 
       case 2:
-        drawables.emplace_back(std::make_unique<drawable::RelativeBBox>(
-                                   drawable::Point2DRelative(0.25f, 0.1f),
+        drawables.emplace_back(
+            drawable::RelativeBBox(drawable::Point2DRelative(0.25f, 0.1f),
                                    drawable::Point2DRelative(0.45f, 0.9f)),
-                               seven_segs_png);
-        drawables.emplace_back(std::make_unique<drawable::RelativeBBox>(
-                                   drawable::Point2DRelative(0.55f, 0.1f),
+            seven_segs_png);
+        drawables.emplace_back(
+            drawable::RelativeBBox(drawable::Point2DRelative(0.55f, 0.1f),
                                    drawable::Point2DRelative(0.75f, 0.9f)),
-                               seven_segs_png);
+            seven_segs_png);
         break;
 
       default:
@@ -158,7 +158,7 @@ std::string GenerateDisplaySkcd(u_int32_t width, u_int32_t height,
   } else {
     for (int i = 0; i < 10; i++) {
       drawables.emplace_back(
-          std::make_unique<drawable::RelativeBBox>(
+          drawable::RelativeBBox(
               drawable::Point2DRelative(0.1f * i, 0.0f),
               drawable::Point2DRelative(0.1f * (i + 1), 1.0f)),
           seven_segs_png);
