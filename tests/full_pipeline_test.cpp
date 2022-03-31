@@ -26,7 +26,7 @@
 
 using namespace interstellar;
 
-TEST(FullPipelineTest, BasicAdderOk) {
+TEST(FullPipelineTest, BasicAdderToFileOk) {
   auto tmp_dir = utils::TempDir();
   auto verilog_input_path = absl::StrCat(data_dir, "/verilog/adder.v");
   auto output_skcd_path = tmp_dir.GetPath() / "output.skcd";
@@ -42,6 +42,24 @@ TEST(FullPipelineTest, BasicAdderOk) {
   auto expected_str =
       utils::ReadFile(absl::StrCat(test::test_data_dir, "/result_adder.skcd"));
   EXPECT_EQ(output_str, expected_str);
+}
+
+// Version that return a buffer instead of writing a file
+// IMPORTANT: this is the overload used by api_circuits
+TEST(FullPipelineTest, BasicAdderToBufferOk) {
+  auto tmp_dir = utils::TempDir();
+  auto verilog_input_path = absl::StrCat(data_dir, "/verilog/adder.v");
+
+  std::string buf = circuits::GenerateSkcd({
+      verilog_input_path,
+  });
+
+  // TODO ideally we would want to compare functionally
+  // ie are those the same gates? inputs? outputs? etc
+  EXPECT_EQ(buf.size(), 80);
+  auto expected_str =
+      utils::ReadFile(absl::StrCat(test::test_data_dir, "/result_adder.skcd"));
+  EXPECT_EQ(buf, expected_str);
 }
 
 TEST(FullPipelineTest, ThreadSafeOk) {
