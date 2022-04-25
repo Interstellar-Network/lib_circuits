@@ -1,3 +1,33 @@
+# we compile using a system-installed by default b/c easier for CI(and packaging)
+# but compiling from source CAN be useful while working with ABC interfacing
+if(NOT DEP_ABC_COMPILE_FROM_SOURCE)
+
+################################################################################
+
+# TODO make it optional based on option
+find_library(ABC_LIBRARY abc REQUIRED)
+find_path(ABC_INCLUDE_DIR base/main/main.h REQUIRED
+        # SHOULD be installed into "/usr/include/abc/base/main/main.h"
+        # so remove "abc" part
+        PATH_SUFFIXES abc
+)
+
+add_library(abc::abc SHARED IMPORTED GLOBAL)
+set_property(TARGET abc::abc PROPERTY
+             IMPORTED_LOCATION "${ABC_LIBRARY}")
+target_include_directories(abc::abc INTERFACE "${ABC_INCLUDE_DIR}")
+# "misc/util/abc_global.h:113:5: error: unknown platform"
+# Those are show during abc compilation, and come from "abc_arch_flags_program.exe"
+# -DLIN64;-DSIZEOF_VOID_P=8;-DSIZEOF_LONG=8;-DSIZEOF_INT=4;
+# abc is not properly installable/packageable so we must repeat those
+target_compile_definitions(abc::abc INTERFACE -DLIN64 -DSIZEOF_VOID_P=8 -DSIZEOF_LONG=8 -DSIZEOF_INT=4)
+
+return()
+
+else(NOT DEP_ABC_COMPILE_FROM_SOURCE)
+
+################################################################################
+
 # abc
 # NOTE: yosys has a "frontend" for abc, but it's basically calling the yosys-abc executable
 # so instead we compile libabc, and use the c(++) api
@@ -86,3 +116,7 @@ ${ABC_CXX_FLAGS}
 target_compile_options(abc PRIVATE
 ${ABC_CXX_FLAGS}
 )
+
+add_library(abc::abc ALIAS libabc-pic)
+
+endif(NOT DEP_ABC_COMPILE_FROM_SOURCE)

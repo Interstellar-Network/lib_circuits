@@ -14,7 +14,7 @@ target_link_libraries(blif_parser
     absl::flat_hash_map
 
     PRIVATE
-    fmt
-    xxhash
+    fmt::fmt
+    xxHash::xxHash
     absl::strings
 )

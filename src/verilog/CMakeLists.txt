@@ -9,7 +9,7 @@ target_link_libraries(verilog_compiler
     # eg "ERROR: No such command: techmap"
     # We MUST use "whole-archive" when using STATIC to make it work.
     # -Wl,--whole-archive
-    libyosys
+    yosys::yosys
     # -Wl,--no-whole-archive
 
     absl::strings
