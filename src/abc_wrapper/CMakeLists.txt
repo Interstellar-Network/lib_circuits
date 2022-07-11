@@ -6,7 +6,7 @@ add_library(abc-wrapper
 
 target_link_libraries(abc-wrapper
     PRIVATE
-    libabc-pic
+    abc::abc
     absl::strings
     absl::synchronization
     glog::glog
