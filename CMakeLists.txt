@@ -13,34 +13,34 @@ option(DEP_YOSYS_COMPILE_FROM_SOURCE "Compile Yosys from source instead of using
 
 ################################################################################
 
-include(deps/cmake/compile_flags.cmake)
-include(deps/cmake/coverage.cmake)
-include(deps/cmake/options.cmake)
-include(deps/cmake/sanitizers.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/deps/cmake/compile_flags.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/deps/cmake/coverage.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/deps/cmake/options.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/deps/cmake/sanitizers.cmake)
 
 ################################################################################
 
-include(3rd_party/cimg.cmake)
-include(3rd_party/abseil.cmake)
-include(3rd_party/fmt.cmake)
-include(3rd_party/glog.cmake)
-include(3rd_party/protobuf.cmake)
-include(3rd_party/xxhash.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/3rd_party/cimg.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/3rd_party/abseil.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/3rd_party/fmt.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/3rd_party/glog.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/3rd_party/protobuf.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/3rd_party/xxhash.cmake)
 
-include(deps/abc.cmake)
-include(deps/yosys.cmake)
-include(deps/protos.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/deps/abc.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/deps/yosys.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/deps/protos.cmake)
 
 ################################################################################
 
 # will embed all the .v,.png,etc.
 # (ie basically make them install-ready)
-add_subdirectory(data)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/data)
 
 # the main sources
-add_subdirectory(src)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/src)
 
 if(interstellar_lib_circuits_BUILD_TESTS)
   enable_testing()
-  add_subdirectory(tests)
+  add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/tests)
 endif(interstellar_lib_circuits_BUILD_TESTS)

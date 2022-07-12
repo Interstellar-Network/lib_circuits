@@ -60,7 +60,7 @@ endfunction(compile_proto_cpp)
 
 ################################################################################
 
-compile_proto_cpp("./deps/protos/skcd/skcd.proto")
+compile_proto_cpp("${CMAKE_CURRENT_LIST_DIR}/protos/skcd/skcd.proto")
 
 ################################################################################
 
