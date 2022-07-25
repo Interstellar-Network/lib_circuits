@@ -1,4 +1,4 @@
-################################################################################
+# ###############################################################################
 # This dep is NOT using Conan b/c it CAN have MANY dependencies based on the
 # enabled features, and we DO NOT need most of them
 # cf https://conan.io/center/cimg?os=&tab=dependencies
@@ -7,10 +7,12 @@ include(FetchContent)
 
 FetchContent_Declare(
     cimg_fetch
-    # v.3.0.2 on Jan 15
+
+    # "tagged this Jun 20, 2022"
     # NOTE: URL instead of GIT(even with GIT_SHALLOW ON)
     # real    0m5.298s
-    URL  https://github.com/dtschump/CImg/archive/refs/tags/v.3.0.2.tar.gz
+    URL https://github.com/dtschump/CImg/archive/refs/tags/v.3.1.4.tar.gz
+
     # time git clone https://github.com/dtschump/CImg.git --branch v.3.0.2
     # real    0m15.698s
     # time git clone https://github.com/dtschump/CImg.git --branch v.3.0.2 --depth 1
@@ -27,7 +29,6 @@ FetchContent_Declare(
 )
 
 # NOT a CMake project so no option etc
-
 FetchContent_MakeAvailable(cimg_fetch)
 
 # NOT a CMake project, add the minimal lib manually

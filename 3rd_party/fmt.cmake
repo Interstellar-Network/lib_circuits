@@ -1,42 +1,47 @@
-include(${CMAKE_CURRENT_LIST_DIR}/_conan.cmake)
+# ##############################################################################
+if(USE_CONAN)
+    include(${CMAKE_CURRENT_LIST_DIR}/../_conan.cmake)
 
-################################################################################
+    conan_cmake_configure(REQUIRES fmt/9.0.0
+        GENERATORS cmake_find_package)
 
-include(${CMAKE_BINARY_DIR}/conan.cmake)
+    # NO!
+    # FAIL:
+    # ERROR: Missing prebuilt package for...
+    # - We DO NOT care if the package was built with gcc even if locally we are using clang
+    # - We WANT to always use Release libs even when building Debug locally(SHOULD be configurable)
+    # --> only works reliably with "BUILD all" cf below for details
+    conan_cmake_autodetect(settings)
+    message(STATUS "conan settings : ${settings}")
 
+    conan_cmake_install(PATH_OR_REFERENCE .
+        REMOTE conancenter
 
-conan_cmake_configure(REQUIRES fmt/8.1.1
-                      GENERATORS cmake_find_package)
+        # IMPORTANT, b/c it ends up impacting ABSL_OPTION_USE_STD_STRING_VIEW
+        # which is 0 without this, which means it uses absl internal string_view
+        # which means there is NO conversion from str::string_view -> absl::string_view
+        # and that breaks a lot of function
+        # MUST AT LEAST set # SETTINGS compiler.cppstd=${CMAKE_CXX_STANDARD}
+        SETTINGS ${settings}
 
-# NO!
-# FAIL:
-# ERROR: Missing prebuilt package for...
-# - We DO NOT care if the package was built with gcc even if locally we are using clang
-# - We WANT to always use Release libs even when building Debug locally(SHOULD be configurable)
-# conan_cmake_autodetect(settings)
+        # IMPORTANT: we MUST make sure we have repeatable builds, DO NOT use "missing"
+        # else we get random "Exception: Illegal" during tests in CI
+        BUILD all
+    )
 
-message(WARNING "settings : ${settings}")
+    # cf build/Findfmt.cmake for the vars
+    find_package(fmt REQUIRED)
 
-conan_cmake_install(PATH_OR_REFERENCE .
-                    # NO! we WANT the prebuilt binary
-                    # BUILD missing
-                    REMOTE conancenter
-                    # SETTINGS ${settings}
-)
+    return()
+endif(USE_CONAN)
 
-# cf build/Findfmt.cmake for the vars
-find_package(fmt REQUIRED)
-
-return()
-
-################################################################################
-
+# ###############################################################################
 include(FetchContent)
 
 FetchContent_Declare(
     fmt
-    GIT_REPOSITORY  https://github.com/fmtlib/fmt.git
-    GIT_TAG      8.1.1
+    GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+    GIT_TAG 9.0.0
 )
 
 FetchContent_MakeAvailable(fmt)
