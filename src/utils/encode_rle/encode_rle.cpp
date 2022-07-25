@@ -1,6 +1,7 @@
 #include "encode_rle.h"
 
 #include <cassert>
+#include <limits>
 #include <stdexcept>
 
 namespace interstellar {
