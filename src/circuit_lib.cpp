@@ -153,16 +153,18 @@ std::string GenerateSkcd(
 void GenerateDisplaySkcd(
     boost::filesystem::path skcd_output_path, u_int32_t width, u_int32_t height,
     circuits::DisplayDigitType digit_type,
-    std::vector<std::tuple<float, float, float, float>> &&digits_bboxes) {
-  auto result_skcd_buf =
-      GenerateDisplaySkcd(width, height, digit_type, std::move(digits_bboxes));
+    std::vector<std::tuple<float, float, float, float>> &&digits_bboxes,
+    std::unordered_map<std::string, uint32_t> *skcd_config) {
+  auto result_skcd_buf = GenerateDisplaySkcd(
+      width, height, digit_type, std::move(digits_bboxes), skcd_config);
 
   utils::WriteToFile(skcd_output_path, result_skcd_buf);
 }
 
 std::string GenerateDisplaySkcd(
     u_int32_t width, u_int32_t height, DisplayDigitType digit_type,
-    std::vector<std::tuple<float, float, float, float>> &&digits_bboxes) {
+    std::vector<std::tuple<float, float, float, float>> &&digits_bboxes,
+    std::unordered_map<std::string, uint32_t> *skcd_config) {
   auto tmp_dir = utils::TempDir();
 
   const auto &what_to_draw = GetDrawableFromDigitType(digit_type);
@@ -190,6 +192,11 @@ std::string GenerateDisplaySkcd(
   // because Yosys only handles files, not buffers
   auto defines_v_path = tmp_dir.GetPath() / "defines.v";
   utils::WriteToFile(defines_v_path, defines_v_str);
+
+  // copy(return) the config
+  for (auto const &[key, val] : config) {
+    (*skcd_config)[key] = val;
+  }
 
   std::string result_skcd_buf = GenerateSkcd(
       {

@@ -15,6 +15,8 @@
 #pragma once
 
 #include <boost/filesystem.hpp>
+#include <string>
+#include <unordered_map>
 
 namespace interstellar {
 
@@ -54,7 +56,8 @@ enum class DisplayDigitType { seven_segments_png };
 void GenerateDisplaySkcd(
     boost::filesystem::path skcd_output_path, u_int32_t width, u_int32_t height,
     DisplayDigitType digit_type,
-    std::vector<std::tuple<float, float, float, float>> &&digits_bboxes);
+    std::vector<std::tuple<float, float, float, float>> &&digits_bboxes,
+    std::unordered_map<std::string, uint32_t> *skcd_config);
 
 /**
  * Variant of "GenerateDisplaySkcd" that returns a buffer instead of writing to
@@ -84,7 +87,8 @@ void GenerateDisplaySkcd(
  */
 std::string GenerateDisplaySkcd(
     u_int32_t width, u_int32_t height, DisplayDigitType digit_type,
-    std::vector<std::tuple<float, float, float, float>> &&digits_bboxes);
+    std::vector<std::tuple<float, float, float, float>> &&digits_bboxes,
+    std::unordered_map<std::string, uint32_t> *skcd_config);
 
 }  // namespace circuits
 
