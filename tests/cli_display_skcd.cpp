@@ -55,9 +55,10 @@ int main(int argc, char** argv) {
     }
   }
 
+  std::unordered_map<std::string, u_int32_t> skcd_config;
   circuits::GenerateDisplaySkcd(output_skcd_path, width, height,
                                 circuits::DisplayDigitType::seven_segments_png,
-                                std::move(digits_bboxes));
+                                std::move(digits_bboxes), &skcd_config);
 
   return 0;
 }
