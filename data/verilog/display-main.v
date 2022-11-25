@@ -1,4 +1,4 @@
-module main ( msg , rnd , z , pix );
+module main ( z , msg , rnd , pix );
 input [`BITMAP_NB_SEGMENTS-1:0] msg;
 input [`RNDSIZE-1:0] rnd;
 input z;
