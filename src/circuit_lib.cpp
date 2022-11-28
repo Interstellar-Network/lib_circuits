@@ -204,6 +204,7 @@ std::string GenerateDisplaySkcd(
           segments2pixels_v_path.generic_string(),
           absl::StrCat(interstellar::data_dir, "/verilog/rndswitch.v"),
           absl::StrCat(interstellar::data_dir, "/verilog/xorexpand.v"),
+          absl::StrCat(interstellar::data_dir, "/verilog/watermark.v"),
           absl::StrCat(interstellar::data_dir, "/verilog/display-main.v"),
       },
       std::move(config));

@@ -90,6 +90,26 @@ TEST(FullPipelineTest, ThreadSafeOk) {
             80);
 }
 
+// Version that return a buffer instead of writing a file
+// IMPORTANT: this is the overload used by api_circuits
+// TODO
+// TEST(FullPipelineTest, BasicDisplayOk) {
+//   auto tmp_dir = utils::TempDir();
+
+//   std::string GenerateDisplaySkcd(
+//     u_int32_t width, u_int32_t height, DisplayDigitType digit_type,
+//     std::vector<std::tuple<float, float, float, float>> &&digits_bboxes,
+//     std::unordered_map<std::string, uint32_t> *skcd_config);
+
+//   // TODO ideally we would want to compare functionally
+//   // ie are those the same gates? inputs? outputs? etc
+//   EXPECT_EQ(buf.size(), 80);
+//   auto expected_str =
+//       utils::ReadFile(absl::StrCat(test::test_data_dir,
+//       "/result_adder.skcd"));
+//   EXPECT_EQ(buf, expected_str);
+// }
+
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
   google::InitGoogleLogging(argv[0]);
