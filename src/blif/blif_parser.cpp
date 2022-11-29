@@ -180,14 +180,14 @@ Gate ParseGateLine(std::string_view gate_line,
 
 }  // namespace
 
-BlifParser::BlifParser(absl::flat_hash_map<std::string, uint32_t> &&config)
+BlifParser::BlifParser(SkcdConfig &&config)
     : BlifParser(std::move(config), std::make_shared<Random>()) {}
 
 // DEV/TEST
 // Used during tests to use a fake PRNG, needed to have a determistic output
 // of Parse*() with "zero=True"
 // TODO remove when NOT a test build
-BlifParser::BlifParser(absl::flat_hash_map<std::string, uint32_t> &&config,
+BlifParser::BlifParser(SkcdConfig &&config,
                        std::shared_ptr<RandomInterface> random)
     : random_(random), config_(std::move(config)) {}
 

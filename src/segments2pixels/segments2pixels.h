@@ -14,10 +14,9 @@
 
 #pragma once
 
-#include <absl/container/flat_hash_map.h>
-
 #include <string>
 
+#include "../blif/skcd_config.h"
 #include "drawable/drawable.h"
 
 namespace interstellar {
@@ -64,13 +63,11 @@ class Segments2Pixels {
   std::string GenerateVerilog() const;
 
   std::string GetDefines() const;
-  const absl::flat_hash_map<std::string, uint32_t>& GetConfig() const;
+  const SkcdConfig& GetConfig() const;
 
  private:
-  uint32_t width_ = 0, height_ = 0, nb_segments_ = 0;
   const std::vector<drawable::Drawable<DrawableWhereT>>& drawables_;
-
-  absl::flat_hash_map<std::string, uint32_t> config_;
+  SkcdConfig config_;
 };
 
 }  // namespace interstellar

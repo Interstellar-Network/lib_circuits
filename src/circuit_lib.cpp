@@ -30,8 +30,7 @@ namespace {
 
 interstellar::BlifParser GenerateBlifBlif(
     const std::vector<std::string_view> &verilog_inputs_paths,
-    const interstellar::utils::TempDir &tmp_dir,
-    absl::flat_hash_map<std::string, uint32_t> &&config) {
+    const interstellar::utils::TempDir &tmp_dir, SkcdConfig &&config) {
   auto output_blif_path = tmp_dir.GetPath() / "output.blif";
 
   interstellar::VerilogHelper::CompileVerilog(
@@ -62,7 +61,7 @@ interstellar::BlifParser GenerateBlifBlif(
 interstellar::BlifParser GenerateBlifBlif(
     const std::vector<std::string_view> &verilog_inputs_paths,
     const interstellar::utils::TempDir &tmp_dir) {
-  absl::flat_hash_map<std::string, uint32_t> config;
+  SkcdConfig config;
   return GenerateBlifBlif(verilog_inputs_paths, tmp_dir, std::move(config));
 }
 
@@ -107,8 +106,7 @@ void GenerateSkcd(boost::filesystem::path skcd_output_path,
 
 std::string GenerateSkcd(
     const std::vector<std::string_view> &verilog_inputs_paths,
-    const utils::TempDir &tmp_dir,
-    absl::flat_hash_map<std::string, uint32_t> &&config) {
+    const utils::TempDir &tmp_dir, SkcdConfig &&config) {
   auto blif_parser =
       GenerateBlifBlif(verilog_inputs_paths, tmp_dir, std::move(config));
 
@@ -131,7 +129,7 @@ void GenerateSkcd(boost::filesystem::path skcd_output_path,
  */
 std::string GenerateSkcd(
     const std::vector<std::string_view> &verilog_inputs_paths,
-    absl::flat_hash_map<std::string, uint32_t> &&config) {
+    SkcdConfig &&config) {
   auto tmp_dir = utils::TempDir();
   auto blif_parser =
       GenerateBlifBlif(verilog_inputs_paths, tmp_dir, std::move(config));
@@ -153,18 +151,16 @@ std::string GenerateSkcd(
 void GenerateDisplaySkcd(
     boost::filesystem::path skcd_output_path, u_int32_t width, u_int32_t height,
     circuits::DisplayDigitType digit_type,
-    std::vector<std::tuple<float, float, float, float>> &&digits_bboxes,
-    std::unordered_map<std::string, uint32_t> *skcd_config) {
-  auto result_skcd_buf = GenerateDisplaySkcd(
-      width, height, digit_type, std::move(digits_bboxes), skcd_config);
+    std::vector<std::tuple<float, float, float, float>> &&digits_bboxes) {
+  auto result_skcd_buf =
+      GenerateDisplaySkcd(width, height, digit_type, std::move(digits_bboxes));
 
   utils::WriteToFile(skcd_output_path, result_skcd_buf);
 }
 
 std::string GenerateDisplaySkcd(
     u_int32_t width, u_int32_t height, DisplayDigitType digit_type,
-    std::vector<std::tuple<float, float, float, float>> &&digits_bboxes,
-    std::unordered_map<std::string, uint32_t> *skcd_config) {
+    std::vector<std::tuple<float, float, float, float>> &&digits_bboxes) {
   auto tmp_dir = utils::TempDir();
 
   const auto &what_to_draw = GetDrawableFromDigitType(digit_type);
@@ -192,11 +188,6 @@ std::string GenerateDisplaySkcd(
   // because Yosys only handles files, not buffers
   auto defines_v_path = tmp_dir.GetPath() / "defines.v";
   utils::WriteToFile(defines_v_path, defines_v_str);
-
-  // copy(return) the config
-  for (auto const &[key, val] : config) {
-    (*skcd_config)[key] = val;
-  }
 
   std::string result_skcd_buf = GenerateSkcd(
       {
