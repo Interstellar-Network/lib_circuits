@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <absl/random/bit_gen_ref.h>
+
 #include <cmath>
 #include <memory>
 #include <random>
@@ -22,7 +24,6 @@
 #include <vector>
 
 #include "gate_types.h"
-#include "my_random.h"
 #include "skcd_config.h"
 
 namespace interstellar {
@@ -42,12 +43,6 @@ class BlifParser {
  public:
   BlifParser();
 
-  // DEV/TEST
-  // Used during tests to use a fake PRNG, needed to have a determistic output
-  // of Parse*() with "zero=True"
-  // TODO remove when NOT a test build
-  BlifParser(std::shared_ptr<RandomInterface> random);
-
   // Disable copy semantics.
   BlifParser(const BlifParser &) = delete;
   BlifParser &operator=(const BlifParser &) = delete;
@@ -59,6 +54,13 @@ class BlifParser {
   // TODO return a struct/class
   // TODO string_view
   void ParseBuffer(std::string_view blif_buffer, bool zero);
+
+  // TEST/DEV ONLY
+  // Used during tests to use a fake PRNG, needed to have a determistic output
+  // of Parse*() with "zero=True"
+  // TODO remove when NOT a test build
+  void ParseBuffer(std::string_view blif_buffer, bool zero,
+                   absl::BitGenRef bitgen);
 
   unsigned int Getn() const { return n_; }
 
@@ -84,9 +86,6 @@ class BlifParser {
   void ReplaceConfig(const SkcdConfig &other);
 
  private:
-  // Basic deps injection to use a fake PRNG during tests
-  std::shared_ptr<RandomInterface> random_;
-
   unsigned int n_ = 0;  // inputs number
   unsigned int m_ = 0;  // outputs number
   unsigned int q_ = 0;  // gates number

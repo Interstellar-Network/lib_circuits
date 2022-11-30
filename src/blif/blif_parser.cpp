@@ -14,6 +14,7 @@
 
 #include "blif_parser.h"
 
+#include <absl/random/random.h>
 #include <absl/strings/str_cat.h>
 #include <absl/strings/str_split.h>
 #include <fmt/format.h>
@@ -113,23 +114,27 @@ Gate ParseGateLine(std::string_view gate_line) {
 
 }  // namespace
 
-BlifParser::BlifParser() : BlifParser(std::make_shared<Random>()) {}
+BlifParser::BlifParser() {}
 
-// DEV/TEST
-// Used during tests to use a fake PRNG, needed to have a determistic output
-// of Parse*() with "zero=True"
-// TODO remove when NOT a test build
-BlifParser::BlifParser(std::shared_ptr<RandomInterface> random)
-    : random_(random) {}
+void BlifParser::ParseBuffer(std::string_view blif_buffer, bool zero) {
+  absl::BitGen bitgen;
+  ParseBuffer(blif_buffer, zero, bitgen);
+}
 
 /**
  * NOTE: as this is using string_views,
  * you MUST keep blif_buffer alive until you are done with this instance
  * ie until after ToSkcd has been called.
+ *
+ * param bitgen: DEV/TEST
+ * Used during tests to use a fake PRNG, needed to have a determistic output
+ * of Parse*() with "zero=True"
+ * TODO remove when NOT a test build
  */
 // TODO handle the '-z' option, see lib_python
 // TODO return a struct/class
-void BlifParser::ParseBuffer(std::string_view blif_buffer, bool zero) {
+void BlifParser::ParseBuffer(std::string_view blif_buffer, bool zero,
+                             absl::BitGenRef bitgen) {
   if (!zero) {
     throw std::runtime_error("BlifParser: only 'zero'(=-z flag) is supported!");
   }
@@ -331,6 +336,8 @@ void BlifParser::ParseBuffer(std::string_view blif_buffer, bool zero) {
     }
   }
 
+  bool rand_switch = absl::Bernoulli(bitgen, 0.5);
+
   // Now the main part: the ".gate"
   // Contrary to lib_python reuse the parsed gates
   // For later use(ie garbling) we also compute the min/max of the gate inputs
@@ -361,10 +368,9 @@ void BlifParser::ParseBuffer(std::string_view blif_buffer, bool zero) {
         // "replace ZERO by XOR(__dummy0, __dummy0)=0"
         GT_[q_] = SkcdGateType::XOR;
 
-        std::vector<unsigned int> &pool =
-            random_->randint(0, 1) != 0u ? pool0 : pool1;
+        std::vector<unsigned int> &pool = rand_switch != 0u ? pool0 : pool1;
 
-        unsigned int x = random_->randint(0, ng / 2 - 1);
+        unsigned int x = absl::Uniform<uint32_t>(bitgen, 0, ng / 2 - 1);
 
         A_[q_] = pool.at(2 * x);
         B_[q_] = pool.at(2 * x + 1);
@@ -373,9 +379,9 @@ void BlifParser::ParseBuffer(std::string_view blif_buffer, bool zero) {
         // "replace ONE by XOR(__dummy0, __dummy1)=1"
         GT_[q_] = SkcdGateType::XOR;
 
-        unsigned int x = random_->randint(0, ng - 1);
+        unsigned int x = absl::Uniform<uint32_t>(bitgen, 0, ng - 1);
 
-        if (random_->randint(0, 1) != 0u) {
+        if (rand_switch) {
           A_[q_] = pool0[x];
           B_[q_] = pool1[x];
         } else {
@@ -389,13 +395,15 @@ void BlifParser::ParseBuffer(std::string_view blif_buffer, bool zero) {
         // __dummy0 XOR A
         GT_[q_] = SkcdGateType::XOR;
 
-        unsigned int random_choice = random_->choice(pool0);
+        unsigned int random_choice =
+            pool0[absl::Uniform(bitgen, 0u, pool0.size())];
         B_[q_] = random_choice;
       } else if (gate.type == SkcdGateType::INV) {
         // "replace INV by XOR(a, __dummy1)=not a"
         GT_[q_] = SkcdGateType::XOR;
 
-        unsigned int random_choice = random_->choice(pool1);
+        unsigned int random_choice =
+            pool1[absl::Uniform(bitgen, 0u, pool1.size())];
         B_[q_] = random_choice;
       }
     }

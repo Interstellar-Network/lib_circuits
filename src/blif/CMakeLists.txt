@@ -14,6 +14,9 @@ target_link_libraries(blif_parser
     PUBLIC
     absl::flat_hash_map
 
+    # used in .h so PUBLIC
+    absl::random_random
+
     PRIVATE
     fmt::fmt
     xxhash

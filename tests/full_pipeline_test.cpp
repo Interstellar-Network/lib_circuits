@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <absl/random/mocking_bit_gen.h>
 #include <absl/strings/str_cat.h>
 #include <glog/logging.h>
 #include <gtest/gtest.h>
@@ -97,9 +98,10 @@ TEST(FullPipelineTest, BasicDisplayFileOk) {
   digits_bboxes.emplace_back(0.25f, 0.1f, 0.45f, 0.9f);
   digits_bboxes.emplace_back(0.55f, 0.1f, 0.75f, 0.9f);
 
+  absl::MockingBitGen bitgen;
   circuits::GenerateDisplaySkcd(output_skcd_path, 120, 52,
                                 circuits::DisplayDigitType::seven_segments_png,
-                                std::move(digits_bboxes));
+                                std::move(digits_bboxes), bitgen);
 
   // TODO ideally we would want to compare functionally
   // ie are those the same gates? inputs? outputs? etc

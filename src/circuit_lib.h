@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <absl/random/bit_gen_ref.h>
+
 #include <boost/filesystem.hpp>
 #include <string>
 #include <unordered_map>
@@ -87,6 +89,25 @@ void GenerateDisplaySkcd(
 std::string GenerateDisplaySkcd(
     u_int32_t width, u_int32_t height, DisplayDigitType digit_type,
     std::vector<std::tuple<float, float, float, float>> &&digits_bboxes);
+
+/**
+ * OVERLOAD TEST/DEV ONLY
+ * Call GenerateDisplaySkcd with a given absl::BitGenRef
+ */
+std::string GenerateDisplaySkcd(
+    u_int32_t width, u_int32_t height, DisplayDigitType digit_type,
+    std::vector<std::tuple<float, float, float, float>> &&digits_bboxes,
+    absl::BitGenRef bitgen);
+
+/**
+ * OVERLOAD TEST/DEV ONLY
+ * Call GenerateDisplaySkcd with a given absl::BitGenRef
+ */
+void GenerateDisplaySkcd(
+    boost::filesystem::path skcd_output_path, u_int32_t width, u_int32_t height,
+    DisplayDigitType digit_type,
+    std::vector<std::tuple<float, float, float, float>> &&digits_bboxes,
+    absl::BitGenRef bitgen);
 
 }  // namespace circuits
 
