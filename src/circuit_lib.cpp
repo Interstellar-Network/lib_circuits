@@ -30,7 +30,7 @@ namespace {
 
 interstellar::BlifParser GenerateBlifBlif(
     const std::vector<std::string_view> &verilog_inputs_paths,
-    const interstellar::utils::TempDir &tmp_dir, SkcdConfig &&config) {
+    const interstellar::utils::TempDir &tmp_dir) {
   auto output_blif_path = tmp_dir.GetPath() / "output.blif";
 
   interstellar::VerilogHelper::CompileVerilog(
@@ -48,21 +48,11 @@ interstellar::BlifParser GenerateBlifBlif(
   // convert .blif.blif -> ~.skcd
   // NOTE: Skcd class was previously used to pass the data around, but it has
   // been replaced by protobuf serialization
-  auto blif_parser = interstellar::BlifParser(std::move(config));
+  auto blif_parser = interstellar::BlifParser();
   auto tmp_blif_blif_str = interstellar::utils::ReadFile(final_blif_blif_path);
   blif_parser.ParseBuffer(tmp_blif_blif_str, true);
 
   return blif_parser;
-}
-
-/**
- * overload GenerateBlifBlif with an empty config
- */
-interstellar::BlifParser GenerateBlifBlif(
-    const std::vector<std::string_view> &verilog_inputs_paths,
-    const interstellar::utils::TempDir &tmp_dir) {
-  SkcdConfig config;
-  return GenerateBlifBlif(verilog_inputs_paths, tmp_dir, std::move(config));
 }
 
 /**
@@ -106,9 +96,8 @@ void GenerateSkcd(boost::filesystem::path skcd_output_path,
 
 std::string GenerateSkcd(
     const std::vector<std::string_view> &verilog_inputs_paths,
-    const utils::TempDir &tmp_dir, SkcdConfig &&config) {
-  auto blif_parser =
-      GenerateBlifBlif(verilog_inputs_paths, tmp_dir, std::move(config));
+    const utils::TempDir &tmp_dir) {
+  auto blif_parser = GenerateBlifBlif(verilog_inputs_paths, tmp_dir);
 
   return interstellar::skcd::Serialize(blif_parser);
 }
@@ -122,19 +111,6 @@ void GenerateSkcd(boost::filesystem::path skcd_output_path,
   auto blif_parser = GenerateBlifBlif(verilog_inputs_paths, tmp_dir);
 
   interstellar::skcd::WriteToFile(skcd_output_path, blif_parser);
-}
-
-/**
- * [internal]
- */
-std::string GenerateSkcd(
-    const std::vector<std::string_view> &verilog_inputs_paths,
-    SkcdConfig &&config) {
-  auto tmp_dir = utils::TempDir();
-  auto blif_parser =
-      GenerateBlifBlif(verilog_inputs_paths, tmp_dir, std::move(config));
-
-  return interstellar::skcd::Serialize(blif_parser);
 }
 
 /**
@@ -189,7 +165,7 @@ std::string GenerateDisplaySkcd(
   auto defines_v_path = tmp_dir.GetPath() / "defines.v";
   utils::WriteToFile(defines_v_path, defines_v_str);
 
-  std::string result_skcd_buf = GenerateSkcd(
+  auto blif_parser = GenerateBlifBlif(
       {
           defines_v_path.generic_string(),
           segments2pixels_v_path.generic_string(),
@@ -198,7 +174,11 @@ std::string GenerateDisplaySkcd(
           absl::StrCat(interstellar::data_dir, "/verilog/watermark.v"),
           absl::StrCat(interstellar::data_dir, "/verilog/display-main.v"),
       },
-      std::move(config));
+      tmp_dir);
+
+  blif_parser.ReplaceConfig(config);
+
+  std::string result_skcd_buf = interstellar::skcd::Serialize(blif_parser);
 
   return result_skcd_buf;
 }

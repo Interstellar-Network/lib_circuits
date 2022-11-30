@@ -113,16 +113,14 @@ Gate ParseGateLine(std::string_view gate_line) {
 
 }  // namespace
 
-BlifParser::BlifParser(SkcdConfig &&config)
-    : BlifParser(std::move(config), std::make_shared<Random>()) {}
+BlifParser::BlifParser() : BlifParser(std::make_shared<Random>()) {}
 
 // DEV/TEST
 // Used during tests to use a fake PRNG, needed to have a determistic output
 // of Parse*() with "zero=True"
 // TODO remove when NOT a test build
-BlifParser::BlifParser(SkcdConfig &&config,
-                       std::shared_ptr<RandomInterface> random)
-    : random_(random), config_(std::move(config)) {}
+BlifParser::BlifParser(std::shared_ptr<RandomInterface> random)
+    : random_(random) {}
 
 /**
  * NOTE: as this is using string_views,
@@ -419,6 +417,15 @@ void BlifParser::ParseBuffer(std::string_view blif_buffer, bool zero) {
   assert(GO_.size() == size_to_reserve && "BlifParser: GO was resized!");
   assert(GT_.size() == size_to_reserve && "BlifParser: GT was resized!");
   assert(O_.size() == outputs_vect.size() && "BlifParser: O was resized!");
+
+  // INPUTS
+  // For now we arbitrarily decide that all inputs are "evaluator_inputs"
+  // NOTE: This is only applicable to "generic" circuits(eg adder etc), and
+  // there no way in the .blif file format to make it work with Two Party
+  // Computation...
+  config_.evaluator_inputs.emplace_back(
+      EvaluatorInputsType::EVALUATOR_INPUTS_RND, n_);
+  assert(config_.evaluator_inputs.size() && "BlifParser: inputs not set!");
 }
 
 /**
@@ -460,5 +467,7 @@ uint32_t BlifParser::GetLabel(std::string_view lbl) {
   }
   return labels_map_.size() - 1;
 }
+
+void BlifParser::ReplaceConfig(const SkcdConfig &other) { config_ = other; }
 
 }  // namespace interstellar

@@ -85,8 +85,8 @@ TEST(FullPipelineTest, ThreadSafeOk) {
 
   auto file_size_result = boost::filesystem::file_size(
       absl::StrCat(output_path.generic_string(), nb_threads - 1, ".skcd"));
-  EXPECT_GT(file_size_result, 45);
-  EXPECT_LT(file_size_result, 55);
+  EXPECT_GT(file_size_result, 50);
+  EXPECT_LT(file_size_result, 60);
 }
 
 // Version that return a buffer instead of writing a file

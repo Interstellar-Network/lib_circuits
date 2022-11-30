@@ -40,16 +40,13 @@ class Label {
  */
 class BlifParser {
  public:
-  /**
-   * config: usually a variation of the Verilog `define
-   */
-  BlifParser(SkcdConfig &&config);
+  BlifParser();
 
   // DEV/TEST
   // Used during tests to use a fake PRNG, needed to have a determistic output
   // of Parse*() with "zero=True"
   // TODO remove when NOT a test build
-  BlifParser(SkcdConfig &&config, std::shared_ptr<RandomInterface> random);
+  BlifParser(std::shared_ptr<RandomInterface> random);
 
   // Disable copy semantics.
   BlifParser(const BlifParser &) = delete;
@@ -83,6 +80,8 @@ class BlifParser {
   const std::vector<unsigned int> &GetO() const { return O_; }
 
   const SkcdConfig &GetConfig() const { return config_; }
+
+  void ReplaceConfig(const SkcdConfig &other);
 
  private:
   // Basic deps injection to use a fake PRNG during tests
