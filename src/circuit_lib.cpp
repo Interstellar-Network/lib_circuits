@@ -137,7 +137,6 @@ std::string GenerateDisplaySkcd(
   // [1] generate Verilog segments2pixels.v
   auto segments2pixels = Segments2Pixels(width, height, drawables);
   auto segments2pixels_v_str = segments2pixels.GenerateVerilog();
-  auto config = segments2pixels.GetConfig();
 
   // write this to segments2pixels.v (in the temp dir)
   // because Yosys only handles files, not buffers
@@ -161,7 +160,7 @@ std::string GenerateDisplaySkcd(
       },
       tmp_dir);
 
-  blif_parser.ReplaceConfig(config);
+  blif_parser.ReplaceConfig(segments2pixels.GetConfig());
 
   std::string result_skcd_buf = interstellar::skcd::Serialize(blif_parser);
 
