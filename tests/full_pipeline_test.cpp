@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <absl/random/mock_distributions.h>
 #include <absl/random/mocking_bit_gen.h>
 #include <absl/strings/str_cat.h>
 #include <glog/logging.h>
@@ -99,6 +100,18 @@ TEST(FullPipelineTest, BasicDisplayFileOk) {
   digits_bboxes.emplace_back(0.55f, 0.1f, 0.75f, 0.9f);
 
   absl::MockingBitGen bitgen;
+  ON_CALL(absl::MockBernoulli(), Call(bitgen, 0.5))
+      .WillByDefault(testing::Return(true));
+  // NOTE: in src/blif/blif_parser.cpp: ng = 72 in this test
+  uint32_t ng = 72;
+  ON_CALL(absl::MockUniform<uint32_t>(), Call(bitgen, 0, ng / 2 - 1))
+      .WillByDefault(testing::Return(12));
+  ON_CALL(absl::MockUniform<uint32_t>(), Call(bitgen, 0, ng - 1))
+      .WillByDefault(testing::Return(10));
+  // for the calls with "pool0.size()" and "pool1.size()"
+  ON_CALL(absl::MockUniform<uint32_t>(), Call(bitgen, 0, ng))
+      .WillByDefault(testing::Return(ng / 2 + 10));
+
   circuits::GenerateDisplaySkcd(output_skcd_path, 120, 52,
                                 circuits::DisplayDigitType::seven_segments_png,
                                 std::move(digits_bboxes), bitgen);

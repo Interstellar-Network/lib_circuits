@@ -20,6 +20,7 @@
 #include <fmt/format.h>
 #include <xxhash.h>
 
+#include <cassert>
 #include <iostream>
 #include <stack>
 
@@ -336,6 +337,9 @@ void BlifParser::ParseBuffer(std::string_view blif_buffer, bool zero,
     }
   }
 
+  assert(pool0.size() == ng && "pool0: wrong size!");
+  assert(pool1.size() == ng && "pool0: wrong size!");
+
   bool rand_switch = absl::Bernoulli(bitgen, 0.5);
 
   // Now the main part: the ".gate"
@@ -396,14 +400,14 @@ void BlifParser::ParseBuffer(std::string_view blif_buffer, bool zero,
         GT_[q_] = SkcdGateType::XOR;
 
         unsigned int random_choice =
-            pool0[absl::Uniform(bitgen, 0u, pool0.size())];
+            pool0[absl::Uniform<uint32_t>(bitgen, 0, pool0.size())];
         B_[q_] = random_choice;
       } else if (gate.type == SkcdGateType::INV) {
         // "replace INV by XOR(a, __dummy1)=not a"
         GT_[q_] = SkcdGateType::XOR;
 
         unsigned int random_choice =
-            pool1[absl::Uniform(bitgen, 0u, pool1.size())];
+            pool1[absl::Uniform<uint32_t>(bitgen, 0, pool1.size())];
         B_[q_] = random_choice;
       }
     }

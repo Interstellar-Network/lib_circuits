@@ -193,8 +193,10 @@ void CompileVerilog(const std::vector<std::string_view> &inputs_v_full_paths,
   // proc; etc (old size 2) techmap; opt;    real    0m2.573s user    0m2.441s
   // techmap;         real    0m2.060s user    0m1.906s
 
-  Yosys::Pass::call(&yosys_design,
-                    absl::StrCat("write_blif ", output_blif_full_path));
+  Yosys::Pass::call(
+      &yosys_design,
+      // https://www.reddit.com/r/yosys/comments/8vvflm/why_are_some_of_the_wires_nondriven_in_this/
+      absl::StrCat("write_blif -noalias ", output_blif_full_path));
 
   // Calling this will prevent subsequent yosys_setup from working(pass_register
   // would be empty)
