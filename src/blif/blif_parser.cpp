@@ -14,7 +14,6 @@
 
 #include "blif_parser.h"
 
-#include <absl/random/random.h>
 #include <absl/strings/str_cat.h>
 #include <absl/strings/str_split.h>
 #include <fmt/format.h>
@@ -25,7 +24,6 @@
 #include <stack>
 
 static constexpr char kdummy0[] = "__dummy0";
-static constexpr char kdummy1[] = "__dummy1";
 
 namespace interstellar {
 
@@ -117,11 +115,6 @@ Gate ParseGateLine(std::string_view gate_line) {
 
 BlifParser::BlifParser() {}
 
-void BlifParser::ParseBuffer(std::string_view blif_buffer, bool zero) {
-  absl::BitGen bitgen;
-  ParseBuffer(blif_buffer, zero, bitgen);
-}
-
 /**
  * NOTE: as this is using string_views,
  * you MUST keep blif_buffer alive until you are done with this instance
@@ -134,12 +127,7 @@ void BlifParser::ParseBuffer(std::string_view blif_buffer, bool zero) {
  */
 // TODO handle the '-z' option, see lib_python
 // TODO return a struct/class
-void BlifParser::ParseBuffer(std::string_view blif_buffer, bool zero,
-                             absl::BitGenRef bitgen) {
-  if (!zero) {
-    throw std::runtime_error("BlifParser: only 'zero'(=-z flag) is supported!");
-  }
-
+void BlifParser::ParseBuffer(std::string_view blif_buffer) {
   std::vector<std::string_view> lines;
 
   // IMPORTANT: we are using string_views, but to handle the continuations, we
@@ -255,92 +243,30 @@ void BlifParser::ParseBuffer(std::string_view blif_buffer, bool zero,
 
   m_ = outputs_vect.size();
 
-  // Based on "zero" or not, we will handle the .gate differently
   // Step 1: parse all the gates
   // NOTE: excluding the last one, which is ".endmodule"
   std::vector<Gate> gates_vect;
-  size_t count0 = 0, count1 = 0;  // only needed when "zero"
   for (auto line_gate = lines.begin() + 3; line_gate != lines.end() - 1;
        ++line_gate) {
     Gate gate = ParseGateLine(*line_gate);
     gates_vect.push_back(gate);
-
-    if ((gate.type == SkcdGateType::ZERO) || (gate.type == SkcdGateType::BUF)) {
-      count0++;
-    } else if ((gate.type == SkcdGateType::ONE) ||
-               (gate.type == SkcdGateType::INV)) {
-      count1++;
-    }
-  }
-
-  // only when "zero"
-  std::vector<unsigned int> pool0, pool1;  // vector of labels
-  unsigned int ng =
-      std::max(static_cast<unsigned int>(std::ceil(std::sqrt(count0))),
-               static_cast<unsigned int>(std::ceil(std::sqrt(count1))));
-
-  // Could refactor this to a max + add ng%2
-  if (ng < 2) {
-    ng = 2;
-  }
-  if ((ng % 2) != 0u) {
-    ng++;
   }
 
   // prealloc
-  // A,B,GO,GT: when 'zero':
-  // - two 'push_back' 'ng' times
+  // A,B,GO,GT:
   // - one 'push_back' per gates_vect elem
-  size_t size_to_reserve = 2 * ng + gates_vect.size();
+  size_t size_to_reserve = gates_vect.size();
   A_.reserve(size_to_reserve);
   B_.reserve(size_to_reserve);
   GO_.reserve(size_to_reserve);
   GT_.reserve(size_to_reserve);
 
-  if (!zero) {
-    // allocate 2 dummies
-    // NOTE: we do it now to have the same behavior as lib_python, but it's not
-    // required it's just this way it's easier to compare the lib_python
-    // implementation and this one(unit test, etc)
-    GetLabel(kdummy0);
-    GetLabel(kdummy1);
-  } else {
-    // allocate gates of type ZERO and ONE for dummies
-    // TODO DRY
+  // allocate gates of type ZERO and ONE for dummies
+  // TODO DRY
 
-    // "SUMMARY: AddressSanitizer: stack-use-after-scope"
-    // Related to eg GetLabel( "__dummy0") line 264
-    // we MUST keep the "__dummyN" strings valid for this whole function
-
-    pool0.reserve(ng);
-
-    for (unsigned int i = 0; i < ng; i++) {
-      A_.push_back(0);
-      B_.push_back(0);
-      GT_.push_back(SkcdGateType::ZERO);
-      unsigned int lbl = GetLabel("__dummy" + fmt::format_int(i * 2).str());
-      pool0.push_back(lbl);
-      GO_.push_back(lbl);
-      q_++;
-    }
-
-    pool1.reserve(ng);
-
-    for (unsigned int i = 0; i < ng; i++) {
-      A_.push_back(0);
-      B_.push_back(0);
-      GT_.push_back(SkcdGateType::ONE);
-      unsigned int lbl = GetLabel("__dummy" + fmt::format_int(i * 2 + 1).str());
-      pool1.push_back(lbl);
-      GO_.push_back(lbl);
-      q_++;
-    }
-  }
-
-  assert(pool0.size() == ng && "pool0: wrong size!");
-  assert(pool1.size() == ng && "pool0: wrong size!");
-
-  bool rand_switch = absl::Bernoulli(bitgen, 0.5);
+  // "SUMMARY: AddressSanitizer: stack-use-after-scope"
+  // Related to eg GetLabel( "__dummy0") line 264
+  // we MUST keep the "__dummyN" strings valid for this whole function
 
   // Now the main part: the ".gate"
   // Contrary to lib_python reuse the parsed gates
@@ -366,51 +292,6 @@ void BlifParser::ParseBuffer(std::string_view blif_buffer, bool zero,
 
     GO_.emplace_back(GetLabel(gate.o));
     GT_.push_back(gate.type);
-
-    if (zero) {
-      if (gate.type == SkcdGateType::ZERO) {
-        // "replace ZERO by XOR(__dummy0, __dummy0)=0"
-        GT_[q_] = SkcdGateType::XOR;
-
-        std::vector<unsigned int> &pool = rand_switch != 0u ? pool0 : pool1;
-
-        unsigned int x = absl::Uniform<uint32_t>(bitgen, 0, ng / 2 - 1);
-
-        A_[q_] = pool.at(2 * x);
-        B_[q_] = pool.at(2 * x + 1);
-
-      } else if (gate.type == SkcdGateType::ONE) {
-        // "replace ONE by XOR(__dummy0, __dummy1)=1"
-        GT_[q_] = SkcdGateType::XOR;
-
-        unsigned int x = absl::Uniform<uint32_t>(bitgen, 0, ng - 1);
-
-        if (rand_switch) {
-          A_[q_] = pool0[x];
-          B_[q_] = pool1[x];
-        } else {
-          A_[q_] = pool1[x];
-          B_[q_] = pool0[x];
-        }
-
-      } else if (gate.type == SkcdGateType::BUF) {
-        // see comment "BUF gates are to be duplicated" above
-        // replace BUF gate are to be duplicated by or O = BUF(A) <=> O =
-        // __dummy0 XOR A
-        GT_[q_] = SkcdGateType::XOR;
-
-        unsigned int random_choice =
-            pool0[absl::Uniform<uint32_t>(bitgen, 0, pool0.size())];
-        B_[q_] = random_choice;
-      } else if (gate.type == SkcdGateType::INV) {
-        // "replace INV by XOR(a, __dummy1)=not a"
-        GT_[q_] = SkcdGateType::XOR;
-
-        unsigned int random_choice =
-            pool1[absl::Uniform<uint32_t>(bitgen, 0, pool1.size())];
-        B_[q_] = random_choice;
-      }
-    }
 
     q_++;
   }

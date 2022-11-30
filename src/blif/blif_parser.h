@@ -14,8 +14,6 @@
 
 #pragma once
 
-#include <absl/random/bit_gen_ref.h>
-
 #include <cmath>
 #include <memory>
 #include <random>
@@ -53,14 +51,7 @@ class BlifParser {
   // TODO handle the '-z' option, see lib_python
   // TODO return a struct/class
   // TODO string_view
-  void ParseBuffer(std::string_view blif_buffer, bool zero);
-
-  // TEST/DEV ONLY
-  // Used during tests to use a fake PRNG, needed to have a determistic output
-  // of Parse*() with "zero=True"
-  // TODO remove when NOT a test build
-  void ParseBuffer(std::string_view blif_buffer, bool zero,
-                   absl::BitGenRef bitgen);
+  void ParseBuffer(std::string_view blif_buffer);
 
   unsigned int Getn() const { return n_; }
 

@@ -41,7 +41,7 @@ endfunction()
 # NOTE: gtest_discover_tests requires cmake 3.10
 add_google_test(abc_test "abc-wrapper test_resources absl::strings utils_files")
 gtest_discover_tests(abc_test)
-add_google_test(full_pipeline_test "circuit_lib test_resources absl::strings GTest::gmock absl::random_random utils_files")
+add_google_test(full_pipeline_test "circuit_lib test_resources absl::strings utils_files")
 gtest_discover_tests(full_pipeline_test)
 add_google_test(segments2pixels_test "segments2pixels test_resources absl::strings utils_files GTest::gmock")
 gtest_discover_tests(segments2pixels_test)

@@ -20,7 +20,6 @@ add_library(circuit_lib
 
 target_link_libraries(circuit_lib
     PUBLIC
-    absl::random_random
 
     PRIVATE
     absl::strings

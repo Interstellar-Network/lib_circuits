@@ -31,7 +31,7 @@ namespace {
 
 interstellar::BlifParser GenerateBlifBlif(
     const std::vector<std::string_view> &verilog_inputs_paths,
-    const interstellar::utils::TempDir &tmp_dir, absl::BitGenRef bitgen) {
+    const interstellar::utils::TempDir &tmp_dir) {
   auto output_blif_path = tmp_dir.GetPath() / "output.blif";
 
   interstellar::VerilogHelper::CompileVerilog(
@@ -51,7 +51,7 @@ interstellar::BlifParser GenerateBlifBlif(
   // been replaced by protobuf serialization
   auto blif_parser = interstellar::BlifParser();
   auto tmp_blif_blif_str = interstellar::utils::ReadFile(final_blif_blif_path);
-  blif_parser.ParseBuffer(tmp_blif_blif_str, true, bitgen);
+  blif_parser.ParseBuffer(tmp_blif_blif_str);
 
   return blif_parser;
 }
@@ -87,32 +87,13 @@ namespace circuits {
 
 // TODO how to handle InitGoogleLogging ?
 
-void GenerateSkcd(boost::filesystem::path skcd_output_path,
-                  const std::vector<std::string_view> &verilog_inputs_paths,
-                  const utils::TempDir &tmp_dir) {
-  absl::BitGen bitgen;
-  auto blif_parser = GenerateBlifBlif(verilog_inputs_paths, tmp_dir, bitgen);
-
-  interstellar::skcd::WriteToFile(skcd_output_path, blif_parser);
-}
-
-std::string GenerateSkcd(
-    const std::vector<std::string_view> &verilog_inputs_paths,
-    const utils::TempDir &tmp_dir) {
-  absl::BitGen bitgen;
-  auto blif_parser = GenerateBlifBlif(verilog_inputs_paths, tmp_dir, bitgen);
-
-  return interstellar::skcd::Serialize(blif_parser);
-}
-
 /**
  * [internal]
  */
 void GenerateSkcd(boost::filesystem::path skcd_output_path,
                   const std::vector<std::string_view> &verilog_inputs_paths) {
   auto tmp_dir = utils::TempDir();
-  absl::BitGen bitgen;
-  auto blif_parser = GenerateBlifBlif(verilog_inputs_paths, tmp_dir, bitgen);
+  auto blif_parser = GenerateBlifBlif(verilog_inputs_paths, tmp_dir);
 
   interstellar::skcd::WriteToFile(skcd_output_path, blif_parser);
 }
@@ -123,8 +104,7 @@ void GenerateSkcd(boost::filesystem::path skcd_output_path,
 std::string GenerateSkcd(
     const std::vector<std::string_view> &verilog_inputs_paths) {
   auto tmp_dir = utils::TempDir();
-  absl::BitGen bitgen;
-  auto blif_parser = GenerateBlifBlif(verilog_inputs_paths, tmp_dir, bitgen);
+  auto blif_parser = GenerateBlifBlif(verilog_inputs_paths, tmp_dir);
 
   return interstellar::skcd::Serialize(blif_parser);
 }
@@ -133,20 +113,8 @@ void GenerateDisplaySkcd(
     boost::filesystem::path skcd_output_path, u_int32_t width, u_int32_t height,
     circuits::DisplayDigitType digit_type,
     std::vector<std::tuple<float, float, float, float>> &&digits_bboxes) {
-  absl::BitGen bitgen;
-  auto result_skcd_buf = GenerateDisplaySkcd(width, height, digit_type,
-                                             std::move(digits_bboxes), bitgen);
-
-  utils::WriteToFile(skcd_output_path, result_skcd_buf);
-}
-
-void GenerateDisplaySkcd(
-    boost::filesystem::path skcd_output_path, u_int32_t width, u_int32_t height,
-    circuits::DisplayDigitType digit_type,
-    std::vector<std::tuple<float, float, float, float>> &&digits_bboxes,
-    absl::BitGenRef bitgen) {
-  auto result_skcd_buf = GenerateDisplaySkcd(width, height, digit_type,
-                                             std::move(digits_bboxes), bitgen);
+  auto result_skcd_buf =
+      GenerateDisplaySkcd(width, height, digit_type, std::move(digits_bboxes));
 
   utils::WriteToFile(skcd_output_path, result_skcd_buf);
 }
@@ -154,15 +122,6 @@ void GenerateDisplaySkcd(
 std::string GenerateDisplaySkcd(
     u_int32_t width, u_int32_t height, DisplayDigitType digit_type,
     std::vector<std::tuple<float, float, float, float>> &&digits_bboxes) {
-  absl::BitGen bitgen;
-  return GenerateDisplaySkcd(width, height, digit_type,
-                             std::move(digits_bboxes), bitgen);
-}
-
-std::string GenerateDisplaySkcd(
-    u_int32_t width, u_int32_t height, DisplayDigitType digit_type,
-    std::vector<std::tuple<float, float, float, float>> &&digits_bboxes,
-    absl::BitGenRef bitgen) {
   auto tmp_dir = utils::TempDir();
 
   const auto &what_to_draw = GetDrawableFromDigitType(digit_type);
@@ -200,7 +159,7 @@ std::string GenerateDisplaySkcd(
           absl::StrCat(interstellar::data_dir, "/verilog/watermark.v"),
           absl::StrCat(interstellar::data_dir, "/verilog/display-main.v"),
       },
-      tmp_dir, bitgen);
+      tmp_dir);
 
   blif_parser.ReplaceConfig(config);
 
