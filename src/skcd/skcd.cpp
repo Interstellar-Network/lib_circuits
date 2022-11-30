@@ -22,10 +22,6 @@ namespace {
 
 void PrepareSkcdPb(const interstellar::BlifParser &blif_parser,
                    interstellarpbskcd::Skcd *skcd_pb) {
-  skcd_pb->set_m(blif_parser.Getm());
-  skcd_pb->set_n(blif_parser.Getn());
-  skcd_pb->set_q(blif_parser.Getq());
-
   const auto &a = blif_parser.GetA();
   google::protobuf::RepeatedField<uint32_t> a_data(a.begin(), a.end());
   skcd_pb->mutable_a()->Swap(&a_data);
@@ -50,25 +46,49 @@ void PrepareSkcdPb(const interstellar::BlifParser &blif_parser,
   google::protobuf::RepeatedField<uint32_t> o_data(o.begin(), o.end());
   skcd_pb->mutable_o()->Swap(&o_data);
 
-  const auto &circuit_data = blif_parser.GetCircuitData();
-  skcd_pb->mutable_circuit_data()->set_gate_input_min(
-      circuit_data.gate_input_min);
-  skcd_pb->mutable_circuit_data()->set_gate_input_max(
-      circuit_data.gate_input_max);
-  skcd_pb->mutable_circuit_data()->set_gate_output_min(
-      circuit_data.gate_output_min);
-  skcd_pb->mutable_circuit_data()->set_gate_output_max(
-      circuit_data.gate_output_max);
-  skcd_pb->mutable_circuit_data()->mutable_layer_count()->Assign(
-      circuit_data.layer_count.begin(), circuit_data.layer_count.end());
-  skcd_pb->mutable_circuit_data()->mutable_input_gate_count()->Assign(
-      circuit_data.input_gate_count.begin(),
-      circuit_data.input_gate_count.end());
+  //////////////////////////////////////////////////////////////////////////////
+  // Handle the "config"
 
-  // TODO!!!
-  // for (auto const &[key, val] : blif_parser.GetConfig()) {
-  //   (*skcd_pb->mutable_config())[key] = val;
-  // }
+  const auto &config = blif_parser.GetConfig();
+
+  for (const auto &garbler_input : config.garbler_inputs) {
+    auto input_data = (*skcd_pb->mutable_config()).add_garbler_inputs();
+    switch (garbler_input.type) {
+      case GarblerInputsType::GARBLER_INPUTS_BUF:
+        input_data->set_type(
+            interstellarpbskcd::GarblerInputsType::GARBLER_INPUTS_BUF);
+        break;
+
+      case GarblerInputsType::GARBLER_INPUTS_SEVEN_SEGMENTS:
+        input_data->set_type(interstellarpbskcd::GarblerInputsType::
+                                 GARBLER_INPUTS_SEVEN_SEGMENTS);
+        break;
+
+      case GarblerInputsType::GARBLER_INPUTS_WATERMARK:
+        input_data->set_type(
+            interstellarpbskcd::GarblerInputsType::GARBLER_INPUTS_WATERMARK);
+        break;
+    }
+    input_data->set_length(garbler_input.length);
+  }
+
+  for (const auto &evaluator_input : config.evaluator_inputs) {
+    auto input_data = (*skcd_pb->mutable_config()).add_evaluator_inputs();
+    switch (evaluator_input.type) {
+      case EvaluatorInputsType::EVALUATOR_INPUTS_RND:
+        input_data->set_type(
+            interstellarpbskcd::EvaluatorInputsType::EVALUATOR_INPUTS_RND);
+        break;
+    }
+    input_data->set_length(evaluator_input.length);
+  }
+
+  auto config_display_config_data =
+      (*skcd_pb->mutable_config()).mutable_display_config();
+  config_display_config_data->set_height(config.display_config.height);
+  config_display_config_data->set_width(config.display_config.width);
+  config_display_config_data->set_segments_type(
+      config.display_config.segments_type);
 }
 
 }  // anonymous namespace

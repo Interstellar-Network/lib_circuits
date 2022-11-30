@@ -33,10 +33,9 @@ TEST(VerilogCompilerTest, BasicAdderOk) {
       output_path.generic_string());
 
   // output size depends on compiler, etc
-  // Expected: (boost::filesystem::file_size(output_path)) > (850), actual: 835
-  // vs 850
-  EXPECT_GT(boost::filesystem::file_size(output_path), 725);
-  EXPECT_LT(boost::filesystem::file_size(output_path), 900);
+  auto file_size_result = boost::filesystem::file_size(output_path);
+  EXPECT_GT(file_size_result, 325);
+  EXPECT_LT(file_size_result, 375);
 }
 
 // Used to have an issue where starting multiple CompileVerilog in parallele
@@ -63,12 +62,10 @@ TEST(VerilogCompilerTest, ThreadSafeOk) {
   }
 
   // output size depends on compiler, etc
-  EXPECT_GT(boost::filesystem::file_size(absl::StrCat(
-                output_path.generic_string(), nb_threads - 1, ".blif")),
-            725);
-  EXPECT_LT(boost::filesystem::file_size(absl::StrCat(
-                output_path.generic_string(), nb_threads - 1, ".blif")),
-            900);
+  auto file_size_result = boost::filesystem::file_size(
+      absl::StrCat(output_path.generic_string(), nb_threads - 1, ".blif"));
+  EXPECT_GT(file_size_result, 325);
+  EXPECT_LT(file_size_result, 375);
 }
 
 int main(int argc, char** argv) {

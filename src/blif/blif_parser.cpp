@@ -21,7 +21,6 @@
 
 #include <iostream>
 #include <stack>
-#include <unordered_set>
 
 static constexpr char kdummy0[] = "__dummy0";
 static constexpr char kdummy1[] = "__dummy1";
@@ -48,8 +47,6 @@ class Gate {
   // a and/or b can be null
   // o is always set
   std::string a, b, o;
-
-  GateLayer layer;
 };
 
 /**
@@ -63,9 +60,7 @@ class Gate {
 // TODO better parser; at least use https://abseil.io/docs/cpp/guides/strings
 // for comparison etc
 // or use lorina?
-Gate ParseGateLine(std::string_view gate_line,
-                   const std::unordered_set<std::string_view> &inputs_set,
-                   CircuitData *circuit_data) {
+Gate ParseGateLine(std::string_view gate_line) {
   std::vector<std::string_view> gate_vect =
       absl::StrSplit(gate_line, ' ', absl::SkipEmpty());
 
@@ -112,68 +107,6 @@ Gate ParseGateLine(std::string_view gate_line,
           "BlifParser::ParseGateLine : could not parse the .gate");
     }
   }
-
-  // Now we can compute the gate's layer
-  // 1: if a gate has two inputs
-  const auto end = inputs_set.end();
-  if (!gate.a.empty() && !gate.b.empty()) {
-    // case: both inputs are ROOT
-    // eg: '.gate XOR  a=rnd[2] b=rnd[0] O=n29824'
-    if (inputs_set.find(gate.a) != end && inputs_set.find(gate.b) != end) {
-      gate.layer = GateLayer::ROOT;
-    }
-    // case: only ONE of the input is ROOT
-    // eg: '.gate NAND a=n31928 b=msg[6] O=n31929'
-    else if (inputs_set.find(gate.a) != end || inputs_set.find(gate.b) != end) {
-      gate.layer = GateLayer::INTERMEDIATE;
-    }
-    // case: both inputs are NOT ROOT
-    // eg: '.gate XOR  a=n41064 b=n29793 O=pix[13856]'
-    else {
-      gate.layer = GateLayer::SECOND;
-    }
-    // In pratice this is the kind of gates remaining to parse:
-    // '.gate ZERO O=pix[18286]'(A LOT of them)
-    // '.gate INV  a=z O=n29793'(only one)
-    // '.gate BUF  a=pix[186] O=pix[194]'
-  } else if (gate.type == SkcdGateType::ZERO) {
-    // ZERO gates are transformed into XOR(__dummy0, __dummy0)
-    // Which are two ROOT inputs
-    gate.layer = GateLayer::ROOT;
-  } else if ((gate.type == SkcdGateType::INV) ||
-             (gate.type == SkcdGateType::BUF)) {
-    // INV gates are transformed into XOR(a, __dummy1)
-    // So either 'a' is a ROOT input which makes the gate ROOT,
-    // or 'a' is INTERMEDIATE, which the the gate INTERMEDIATE
-    //
-    // TODO BUF gates are to be duplicated; or O = BUF(A) <=> O = __dummy0 XOR A
-    // eg old Yosys/ABC:
-    // .gate XOR  a=n1571 b=n1569 O=pix[186]
-    // .gate XOR a=n1571 b=n1569 O=pix[194]
-    // new Yosys/ABC:
-    // .gate XOR  a=new_n1571_ b=new_n1569_ O=pix[186]
-    // .gate BUF  a=pix[186] O=pix[194]
-    // -> we pick a's layer + 1 as the current layer
-    if (gate.a.empty()) {
-      // NOTE: could be a BUFB/INVB gate; ie the same but with only b input
-      // instead of a
-      throw std::runtime_error("INV/BUF gate without 'a' set!");
-    }
-    if (inputs_set.find(gate.a) != end) {
-      gate.layer = GateLayer::ROOT;
-    } else {
-      gate.layer = GateLayer::INTERMEDIATE;
-    }
-  } else {
-    throw std::runtime_error(
-        absl::StrCat("Unknown gate type found : ", gate_line));
-  }
-
-  // update the layer's count
-  if (static_cast<uint8_t>(gate.layer) > circuit_data->layer_count.size()) {
-    throw std::runtime_error("ParseGateLine: gate.layer: out of range!");
-  }
-  circuit_data->layer_count[static_cast<uint8_t>(gate.layer)]++;
 
   return gate;
 }
@@ -303,11 +236,6 @@ void BlifParser::ParseBuffer(std::string_view blif_buffer, bool zero) {
     GetLabel(input);
   }
 
-  // Put the inputs into a set
-  // We use it to compute on which layer a gate is(in ParseGateLine)
-  std::unordered_set<std::string_view> inputs_set(inputs_vect.begin(),
-                                                  inputs_vect.end());
-
   // Third line
   // expected: .outputs pix[0] pix[1] etc
   if (lines[2].find(".outputs") == std::string::npos) {
@@ -330,7 +258,7 @@ void BlifParser::ParseBuffer(std::string_view blif_buffer, bool zero) {
   size_t count0 = 0, count1 = 0;  // only needed when "zero"
   for (auto line_gate = lines.begin() + 3; line_gate != lines.end() - 1;
        ++line_gate) {
-    Gate gate = ParseGateLine(*line_gate, inputs_set, &circuit_data_);
+    Gate gate = ParseGateLine(*line_gate);
     gates_vect.push_back(gate);
 
     if ((gate.type == SkcdGateType::ZERO) || (gate.type == SkcdGateType::BUF)) {
@@ -403,13 +331,7 @@ void BlifParser::ParseBuffer(std::string_view blif_buffer, bool zero) {
       GO_.push_back(lbl);
       q_++;
     }
-
-    // the __dummyN are root inputs, so add them to the count to make sure
-    // circuit_data's layer_count matches the final gate's count(ie 'q_')
-    circuit_data_.layer_count[static_cast<uint8_t>(GateLayer::ROOT)] += ng * 2;
   }
-
-  printf("BlifParser: inputs : %d, outputs : %d\n", n_, m_);
 
   // Now the main part: the ".gate"
   // Contrary to lib_python reuse the parsed gates
@@ -422,34 +344,19 @@ void BlifParser::ParseBuffer(std::string_view blif_buffer, bool zero) {
 
     // contrary to 'O', a & b are optionnal
     if (!gate.a.empty()) {
-      auto gate_a = A_.emplace_back(GetLabel(gate.a));
-
-      circuit_data_.gate_input_min =
-          std::min(gate_a, circuit_data_.gate_input_min);
-      circuit_data_.gate_input_max =
-          std::max(gate_a, circuit_data_.gate_input_max);
+      A_.emplace_back(GetLabel(gate.a));
     } else {
       A_.push_back(GetLabel(kdummy0));
     }
 
     if (!gate.b.empty()) {
-      auto gate_b = B_.emplace_back(GetLabel(gate.b));
-
-      circuit_data_.gate_input_min =
-          std::min(gate_b, circuit_data_.gate_input_min);
-      circuit_data_.gate_input_max =
-          std::max(gate_b, circuit_data_.gate_input_max);
+      B_.emplace_back(GetLabel(gate.b));
     } else {
       B_.push_back(GetLabel(kdummy0));
     }
 
-    auto gate_o = GO_.emplace_back(GetLabel(gate.o));
+    GO_.emplace_back(GetLabel(gate.o));
     GT_.push_back(gate.type);
-
-    circuit_data_.gate_output_min =
-        std::min(gate_o, circuit_data_.gate_output_min);
-    circuit_data_.gate_output_max =
-        std::max(gate_o, circuit_data_.gate_output_max);
 
     if (zero) {
       if (gate.type == SkcdGateType::ZERO) {
@@ -512,28 +419,6 @@ void BlifParser::ParseBuffer(std::string_view blif_buffer, bool zero) {
   assert(GO_.size() == size_to_reserve && "BlifParser: GO was resized!");
   assert(GT_.size() == size_to_reserve && "BlifParser: GT was resized!");
   assert(O_.size() == outputs_vect.size() && "BlifParser: O was resized!");
-
-  // CHECK layer_count must match the number of gate = every gate should have
-  // been counted
-  assert(std::accumulate(circuit_data_.layer_count.begin(),
-                         circuit_data_.layer_count.end(), 0u) == q_ &&
-         "'q' does not match layer_count!");
-
-  // circuit_data: update input -> gate map
-  // we init it we another loop to have the correct final A & B
-  // (else we would miss some __dummyN in the counts)
-  // Also this way we can init to 'just the size we need' instead of 'nb_labels'
-  // gate_input_max + 1 b/c gate_input_max IS a valid input
-  circuit_data_.input_gate_count.resize(circuit_data_.gate_input_max + 1, 0);
-  for (uint32_t i = 0; i < q_; ++i) {
-    // TODO this FAIL if there are no input(eg when a circuit only has only ZERO
-    // gates); for now it does not matter but this parser is definitely not
-    // robust...
-    assert(A_[i] < circuit_data_.input_gate_count.size() && "out of range!");
-    assert(B_[i] < circuit_data_.input_gate_count.size() && "out of range!");
-    circuit_data_.input_gate_count[A_[i]]++;
-    circuit_data_.input_gate_count[B_[i]]++;
-  }
 }
 
 /**

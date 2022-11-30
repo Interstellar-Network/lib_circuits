@@ -15,19 +15,19 @@ enum class EvaluatorInputsType : uint8_t {
 
 struct GarblerInputs {
   GarblerInputsType type;
-  uint32_t length;
+  uint32_t length = 0;
 };
 
 struct EvaluatorInputs {
   EvaluatorInputsType type;
-  uint32_t length;
+  uint32_t length = 0;
 };
 
 struct DisplayConfig {
-  uint32_t width;
-  uint32_t height;
+  uint32_t width = 0;
+  uint32_t height = 0;
   // cf drawable::DigitSegmentsType
-  uint32_t segments_type;
+  uint32_t segments_type = 0;
 };
 
 /**

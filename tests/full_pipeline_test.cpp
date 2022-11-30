@@ -37,7 +37,6 @@ TEST(FullPipelineTest, BasicAdderToFileOk) {
 
   // TODO ideally we would want to compare functionally
   // ie are those the same gates? inputs? outputs? etc
-  EXPECT_EQ(boost::filesystem::file_size(output_skcd_path), 80);
   auto output_str = utils::ReadFile(output_skcd_path);
   auto expected_str =
       utils::ReadFile(absl::StrCat(test::test_data_dir, "/result_adder.skcd"));
@@ -56,7 +55,6 @@ TEST(FullPipelineTest, BasicAdderToBufferOk) {
 
   // TODO ideally we would want to compare functionally
   // ie are those the same gates? inputs? outputs? etc
-  EXPECT_EQ(buf.size(), 80);
   auto expected_str =
       utils::ReadFile(absl::StrCat(test::test_data_dir, "/result_adder.skcd"));
   EXPECT_EQ(buf, expected_str);
@@ -85,9 +83,10 @@ TEST(FullPipelineTest, ThreadSafeOk) {
     th.join();
   }
 
-  EXPECT_EQ(boost::filesystem::file_size(absl::StrCat(
-                output_path.generic_string(), nb_threads - 1, ".skcd")),
-            80);
+  auto file_size_result = boost::filesystem::file_size(
+      absl::StrCat(output_path.generic_string(), nb_threads - 1, ".skcd"));
+  EXPECT_GT(file_size_result, 45);
+  EXPECT_LT(file_size_result, 55);
 }
 
 // Version that return a buffer instead of writing a file

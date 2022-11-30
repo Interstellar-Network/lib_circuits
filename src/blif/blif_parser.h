@@ -21,7 +21,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include "circuit_data.h"
 #include "gate_types.h"
 #include "my_random.h"
 #include "skcd_config.h"
@@ -83,8 +82,6 @@ class BlifParser {
 
   const std::vector<unsigned int> &GetO() const { return O_; }
 
-  const CircuitData &GetCircuitData() const { return circuit_data_; }
-
   const SkcdConfig &GetConfig() const { return config_; }
 
  private:
@@ -106,9 +103,6 @@ class BlifParser {
   // TODO(unordered_map?) replace by array LUT?
   std::unordered_map<uint64_t, size_t> labels_map_;
   // size_t current_label_count_ = 0;
-
-  // TODO? but does it make sense when using an temporary file .skcd?
-  CircuitData circuit_data_;
 
   SkcdConfig config_;
 
