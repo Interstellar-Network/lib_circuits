@@ -46,7 +46,6 @@ TEST(FullPipelineTest, BasicAdderToFileOk) {
 // Version that return a buffer instead of writing a file
 // IMPORTANT: this is the overload used by api_circuits
 TEST(FullPipelineTest, BasicAdderToBufferOk) {
-  auto tmp_dir = utils::TempDir();
   auto verilog_input_path = absl::StrCat(data_dir, "/verilog/adder.v");
 
   std::string buf = circuits::GenerateSkcd({
@@ -89,25 +88,27 @@ TEST(FullPipelineTest, ThreadSafeOk) {
   EXPECT_LT(file_size_result, 60);
 }
 
-// Version that return a buffer instead of writing a file
-// IMPORTANT: this is the overload used by api_circuits
-// TODO
-// TEST(FullPipelineTest, BasicDisplayOk) {
-//   auto tmp_dir = utils::TempDir();
+TEST(FullPipelineTest, BasicDisplayFileOk) {
+  auto tmp_dir = utils::TempDir();
+  auto output_skcd_path = tmp_dir.GetPath() / "output.skcd";
 
-//   std::string GenerateDisplaySkcd(
-//     u_int32_t width, u_int32_t height, DisplayDigitType digit_type,
-//     std::vector<std::tuple<float, float, float, float>> &&digits_bboxes,
-//     std::unordered_map<std::string, uint32_t> *skcd_config);
+  // cf tests/cli_display_skcd.cpp
+  std::vector<std::tuple<float, float, float, float>> digits_bboxes;
+  digits_bboxes.emplace_back(0.25f, 0.1f, 0.45f, 0.9f);
+  digits_bboxes.emplace_back(0.55f, 0.1f, 0.75f, 0.9f);
 
-//   // TODO ideally we would want to compare functionally
-//   // ie are those the same gates? inputs? outputs? etc
-//   EXPECT_EQ(buf.size(), 80);
-//   auto expected_str =
-//       utils::ReadFile(absl::StrCat(test::test_data_dir,
-//       "/result_adder.skcd"));
-//   EXPECT_EQ(buf, expected_str);
-// }
+  circuits::GenerateDisplaySkcd(output_skcd_path, 120, 52,
+                                circuits::DisplayDigitType::seven_segments_png,
+                                std::move(digits_bboxes));
+
+  // TODO ideally we would want to compare functionally
+  // ie are those the same gates? inputs? outputs? etc
+  auto output_str = utils::ReadFile(output_skcd_path);
+  auto expected_str = utils::ReadFile(
+      absl::StrCat(test::test_data_dir, "/display_120x52_2digits.skcd.pb.bin"));
+  EXPECT_EQ(output_str.size(), expected_str.size());
+  EXPECT_EQ(output_str, expected_str);
+}
 
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
