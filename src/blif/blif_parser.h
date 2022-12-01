@@ -18,7 +18,6 @@
 #include <memory>
 #include <random>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #include "gate_types.h"
@@ -34,6 +33,10 @@ class Label {
 /**
  * Basic .blif parser.
  * Used to parse the blif juste before conversion to .skcd
+ *
+ * As of the latest refactor (for Swanky/Rust, late 2022) .skcd is now
+ * a basic raw mapping of the .blif format.
+ * IE no more gate rewriting (to XOR), no label recomputation via Hashmap, etc
  *
  * WARNING: only parses a subset of .blif !
  */
@@ -53,53 +56,22 @@ class BlifParser {
   // TODO string_view
   void ParseBuffer(std::string_view blif_buffer);
 
-  unsigned int Getn() const { return n_; }
-
-  unsigned int Getm() const { return m_; }
-
-  unsigned int Getq() const { return q_; }
-
   // WARNING: the functions below return REF on the internal vectors;
   // They are used when constructing the Skcd, by move so ref is fine.
 
-  const std::vector<unsigned int> &GetA() const { return A_; }
+  const std::vector<SkcdGate> &GetGates() const { return gates_; }
 
-  const std::vector<unsigned int> &GetB() const { return B_; }
-
-  const std::vector<unsigned int> &GetGO() const { return GO_; }
-
-  const std::vector<SkcdGateType> &GetGT() const { return GT_; }
-
-  const std::vector<unsigned int> &GetO() const { return O_; }
+  const std::vector<std::string> &GetOutputs() const { return O_; }
 
   const SkcdConfig &GetConfig() const { return config_; }
 
   void ReplaceConfig(const SkcdConfig &other);
 
  private:
-  unsigned int n_ = 0;  // inputs number
-  unsigned int m_ = 0;  // outputs number
-  unsigned int q_ = 0;  // gates number
-
-  // Vector of "label index"(except GT)
-  std::vector<unsigned int> A_;   // gates first inputs
-  std::vector<unsigned int> B_;   // gates second inputs
-  std::vector<unsigned int> GO_;  // gates outputs
-  std::vector<SkcdGateType> GT_;  // gates types
-  std::vector<unsigned int> O_;   // outputs
-
-  // Associate a label(as hashed string/string_view) to a index(0-N)
-  // TODO(unordered_map?) replace by array LUT?
-  std::unordered_map<uint64_t, size_t> labels_map_;
-  // size_t current_label_count_ = 0;
+  std::vector<SkcdGate> gates_;
+  std::vector<std::string> O_;  // outputs
 
   SkcdConfig config_;
-
-  /**
-   * "Unlike other string types, you should pass string_view by value just like
- you would an int or a double because string_view is a small value."
-   */
-  uint32_t GetLabel(std::string_view lbl);
 };
 
 }  // namespace interstellar

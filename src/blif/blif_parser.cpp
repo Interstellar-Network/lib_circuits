@@ -17,13 +17,10 @@
 #include <absl/strings/str_cat.h>
 #include <absl/strings/str_split.h>
 #include <fmt/format.h>
-#include <xxhash.h>
 
 #include <cassert>
 #include <iostream>
 #include <stack>
-
-static constexpr char kdummy0[] = "__dummy0";
 
 namespace interstellar {
 
@@ -40,15 +37,6 @@ std::map<std::string_view, SkcdGateType> kMapStringGatetype = {
 
 namespace {
 
-class Gate {
- public:
-  SkcdGateType type;
-
-  // a and/or b can be null
-  // o is always set
-  std::string a, b, o;
-};
-
 /**
  * Parse a '.gate' line in the .blif.blif
  * eg:
@@ -60,7 +48,7 @@ class Gate {
 // TODO better parser; at least use https://abseil.io/docs/cpp/guides/strings
 // for comparison etc
 // or use lorina?
-Gate ParseGateLine(std::string_view gate_line) {
+SkcdGate ParseGateLine(std::string_view gate_line) {
   std::vector<std::string_view> gate_vect =
       absl::StrSplit(gate_line, ' ', absl::SkipEmpty());
 
@@ -68,7 +56,7 @@ Gate ParseGateLine(std::string_view gate_line) {
     throw std::runtime_error("BlifParser: NOT a .gate line!");
   }
 
-  Gate gate;
+  SkcdGate gate;
 
   // TODO(string_view) remove string copy
   std::string gate_vect_type_copy;
@@ -187,14 +175,14 @@ void BlifParser::ParseBuffer(std::string_view blif_buffer) {
 
           *line_with_continuation += line;
 
-          lines.push_back(*line_with_continuation);
+          lines.emplace_back(*line_with_continuation);
 
           // reset the line_with_continuation buffer
           continuation_buffers.push(std::make_unique<std::string>());
           line_with_continuation = continuation_buffers.top().get();
         } else {
           // Standard line
-          lines.push_back(line);
+          lines.emplace_back(line);
         }
       }
     }
@@ -221,13 +209,6 @@ void BlifParser::ParseBuffer(std::string_view blif_buffer) {
   // of the storage)
   inputs_vect.erase(inputs_vect.begin());
 
-  n_ = inputs_vect.size();
-
-  // Init the labels
-  for (auto &input : inputs_vect) {
-    GetLabel(input);
-  }
-
   // Third line
   // expected: .outputs pix[0] pix[1] etc
   if (lines[2].find(".outputs") == std::string::npos) {
@@ -241,75 +222,21 @@ void BlifParser::ParseBuffer(std::string_view blif_buffer) {
   // of the storage)
   outputs_vect.erase(outputs_vect.begin());
 
-  m_ = outputs_vect.size();
-
   // Step 1: parse all the gates
   // NOTE: excluding the last one, which is ".endmodule"
-  std::vector<Gate> gates_vect;
+  gates_.reserve(lines.size());  // prealloc; slightly too many b/c we have
+                                 // already some of those lines
   for (auto line_gate = lines.begin() + 3; line_gate != lines.end() - 1;
        ++line_gate) {
-    Gate gate = ParseGateLine(*line_gate);
-    gates_vect.push_back(gate);
+    SkcdGate gate = ParseGateLine(*line_gate);
+    gates_.emplace_back(gate);
   }
 
-  // prealloc
-  // A,B,GO,GT:
-  // - one 'push_back' per gates_vect elem
-  size_t size_to_reserve = gates_vect.size();
-  A_.reserve(size_to_reserve);
-  B_.reserve(size_to_reserve);
-  GO_.reserve(size_to_reserve);
-  GT_.reserve(size_to_reserve);
-
-  // allocate gates of type ZERO and ONE for dummies
-  // TODO DRY
-
-  // "SUMMARY: AddressSanitizer: stack-use-after-scope"
-  // Related to eg GetLabel( "__dummy0") line 264
-  // we MUST keep the "__dummyN" strings valid for this whole function
-
-  // Now the main part: the ".gate"
-  // Contrary to lib_python reuse the parsed gates
-  // For later use(ie garbling) we also compute the min/max of the gate inputs
-  // and gate outputs
-  for (auto &gate : gates_vect) {
-    if (!gate.o.length()) {
-      throw std::runtime_error("gate's O not set");
-    }
-
-    // contrary to 'O', a & b are optionnal
-    if (!gate.a.empty()) {
-      A_.emplace_back(GetLabel(gate.a));
-    } else {
-      A_.push_back(GetLabel(kdummy0));
-    }
-
-    if (!gate.b.empty()) {
-      B_.emplace_back(GetLabel(gate.b));
-    } else {
-      B_.push_back(GetLabel(kdummy0));
-    }
-
-    GO_.emplace_back(GetLabel(gate.o));
-    GT_.push_back(gate.type);
-
-    q_++;
-  }
-
+  // Now for the outputs
   O_.reserve(outputs_vect.size());
-
   for (auto &output : outputs_vect) {
-    O_.push_back(GetLabel(output));
+    O_.emplace_back(output);
   }
-
-  // CHECK: the various vectors were NOT resized
-  // NOTE: resizing is a performance concern; but it WOULD still work so this is
-  // just asserts not throws
-  assert(A_.size() == size_to_reserve && "BlifParser: A was resized!");
-  assert(B_.size() == size_to_reserve && "BlifParser: B was resized!");
-  assert(GO_.size() == size_to_reserve && "BlifParser: GO was resized!");
-  assert(GT_.size() == size_to_reserve && "BlifParser: GT was resized!");
-  assert(O_.size() == outputs_vect.size() && "BlifParser: O was resized!");
 
   // INPUTS
   // For now we arbitrarily decide that all inputs are "evaluator_inputs"
@@ -317,48 +244,8 @@ void BlifParser::ParseBuffer(std::string_view blif_buffer) {
   // there no way in the .blif file format to make it work with Two Party
   // Computation...
   config_.evaluator_inputs.emplace_back(
-      EvaluatorInputsType::EVALUATOR_INPUTS_RND, n_);
+      EvaluatorInputsType::EVALUATOR_INPUTS_RND, inputs_vect.size());
   assert(config_.evaluator_inputs.size() && "BlifParser: inputs not set!");
-}
-
-/**
- * Return the corresponding 'label', as an 'int'(ie basically an index).
- *
- * Comparison of std::hash and XXHash:
- *  ## std::hash
-    refs:      7,362,209,105
-    refs:      7,363,205,647
-
-    ## labels_map_: XXHash
-    refs:      7,386,706,431
-    refs:      7,386,706,431
-
-    So use std::hash.
- */
-uint32_t BlifParser::GetLabel(std::string_view lbl) {
-  // TODO instead of hashing manually we should pass the hash function when
-  // declaring labels_map_
-  // TODO seed
-  uint64_t lbl_hash = XXH64(lbl.data(), lbl.size(), 4242);
-
-  auto label_idx = labels_map_.find(lbl_hash);
-
-  if (label_idx != labels_map_.end()) {
-    return (*label_idx).second;
-  }
-  // current_label_count_++;
-  // labels_map_.insert(std::pair<std::string, size_t>(lbl,
-  // current_label_count_)); return current_label_count_;
-  /**
-  number = len(labels)
-  labels[label] = number
-  return number
-  */
-  labels_map_.insert(std::pair<uint64_t, size_t>(lbl_hash, labels_map_.size()));
-  if (labels_map_.size() > std::numeric_limits<uint32_t>::max()) {
-    throw std::runtime_error("BlifParser: label does not fit on 32 bits!");
-  }
-  return labels_map_.size() - 1;
 }
 
 void BlifParser::ReplaceConfig(const SkcdConfig &other) { config_ = other; }

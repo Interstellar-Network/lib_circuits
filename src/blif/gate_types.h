@@ -40,4 +40,13 @@ enum class SkcdGateType : u_int8_t {
   ONE
 };
 
+class SkcdGate {
+ public:
+  SkcdGateType type;
+
+  // a and/or b can be null
+  // o is always set
+  std::string a, b, o;
+};
+
 }  // namespace interstellar
