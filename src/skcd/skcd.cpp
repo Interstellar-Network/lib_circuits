@@ -100,6 +100,10 @@ void PrepareSkcdPb(const interstellar::BlifParser &blif_parser,
     (*skcd_pb->add_outputs()) = output;
   }
 
+  for (const auto &input : blif_parser.GetInputs()) {
+    (*skcd_pb->add_inputs()) = input;
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   // Handle the "config"
 
