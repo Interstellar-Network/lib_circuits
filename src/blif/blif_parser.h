@@ -61,7 +61,9 @@ class BlifParser {
 
   const std::vector<SkcdGate> &GetGates() const { return gates_; }
 
-  const std::vector<std::string> &GetOutputs() const { return O_; }
+  const std::vector<std::string> &GetOutputs() const { return outputs_; }
+
+  const std::vector<std::string> &GetInputs() const { return inputs_; }
 
   const SkcdConfig &GetConfig() const { return config_; }
 
@@ -69,7 +71,8 @@ class BlifParser {
 
  private:
   std::vector<SkcdGate> gates_;
-  std::vector<std::string> O_;  // outputs
+  std::vector<std::string> outputs_;  // outputs
+  std::vector<std::string> inputs_;   // inputs
 
   SkcdConfig config_;
 };

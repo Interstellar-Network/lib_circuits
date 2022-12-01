@@ -209,6 +209,11 @@ void BlifParser::ParseBuffer(std::string_view blif_buffer) {
   // of the storage)
   inputs_vect.erase(inputs_vect.begin());
 
+  inputs_.reserve(inputs_vect.size());
+  for (auto &input : inputs_vect) {
+    inputs_.emplace_back(input);
+  }
+
   // Third line
   // expected: .outputs pix[0] pix[1] etc
   if (lines[2].find(".outputs") == std::string::npos) {
@@ -233,9 +238,9 @@ void BlifParser::ParseBuffer(std::string_view blif_buffer) {
   }
 
   // Now for the outputs
-  O_.reserve(outputs_vect.size());
+  outputs_.reserve(outputs_vect.size());
   for (auto &output : outputs_vect) {
-    O_.emplace_back(output);
+    outputs_.emplace_back(output);
   }
 
   // INPUTS
