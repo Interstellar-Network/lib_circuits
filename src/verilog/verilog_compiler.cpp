@@ -171,8 +171,7 @@ void CompileVerilog(const std::vector<std::string_view> &inputs_v_full_paths,
   // Yosys::Pass::call(&yosys_design, "opt");
   Yosys::Pass::call(&yosys_design, "techmap");
   Yosys::Pass::call(&yosys_design, "opt");
-  // TODO!!!
-  // Yosys::Pass::call(&yosys_design, "check -assert");
+  // TODO Yosys::Pass::call(&yosys_design, "check -assert");
 
   // Yosys::Pass::call(&yosys_design, "synth -noabc");
   // Yosys::Pass::call(&yosys_design, "abc");

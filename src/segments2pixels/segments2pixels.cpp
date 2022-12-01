@@ -72,8 +72,8 @@ Segments2Pixels<DrawableWhereT>::Segments2Pixels(
   config_.garbler_inputs.emplace_back(GarblerInputsType::GARBLER_INPUTS_BUF, 1);
   config_.garbler_inputs.emplace_back(
       GarblerInputsType::GARBLER_INPUTS_SEVEN_SEGMENTS, nb_segments);
-  // config_.garbler_inputs.emplace_back(
-  //     GarblerInputsType::GARBLER_INPUTS_WATERMARK, width * height);
+  config_.garbler_inputs.emplace_back(
+      GarblerInputsType::GARBLER_INPUTS_WATERMARK, width * height);
 
   config_.evaluator_inputs.emplace_back(
       EvaluatorInputsType::EVALUATOR_INPUTS_RND, rndsize);
@@ -102,10 +102,10 @@ std::string Segments2Pixels<DrawableWhereT>::GenerateVerilog() const {
   assert(config_.garbler_inputs[1].type ==
              GarblerInputsType::GARBLER_INPUTS_SEVEN_SEGMENTS &&
          "wrong config order in ::Segments2Pixels?");
-  // assert(config_.garbler_inputs[2].type ==
-  //            GarblerInputsType::GARBLER_INPUTS_WATERMARK &&
-  //        "wrong config order in ::Segments2Pixels?");
-  // assert(config_.garbler_inputs[2].length == nb_pixels && "wrong config!");
+  assert(config_.garbler_inputs[2].type ==
+             GarblerInputsType::GARBLER_INPUTS_WATERMARK &&
+         "wrong config order in ::Segments2Pixels?");
+  assert(config_.garbler_inputs[2].length == nb_pixels && "wrong config!");
   unsigned int nb_inputs = config_.garbler_inputs[1].length;
 
   // without reserve : 1657472 - 1771623 (ns)

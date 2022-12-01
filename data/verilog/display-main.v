@@ -1,9 +1,8 @@
-// TODO!!! watmk ,
-module main ( z , msg , rnd , pix );
+module main ( z , msg , watmk , rnd , pix );
 // garbler inputs
 input z;
 input [`BITMAP_NB_SEGMENTS-1:0] msg;
-// input [`WIDTH*`HEIGHT-1:0] watmk;
+input [`WIDTH*`HEIGHT-1:0] watmk;
 
 // evaluator inputs
 input [`RNDSIZE-1:0] rnd;
@@ -21,10 +20,10 @@ wire [`BITMAP_NB_SEGMENTS-1:0] selseg;
 // real    0m8.884s
 // user    0m8.837s
 // sys     0m0.047s
-// wire [`WIDTH*`HEIGHT-1:0] pixsegments;
+wire [`WIDTH*`HEIGHT-1:0] pixsegments;
 
 xorexpand xe(.r (rnd), .p (rndx));
 rndswitch rs(.s (msg), .r (rndx), .z (z), .o (selseg));
-segment2pixel sp(.s (selseg), .p (pix));
-// watermark wm(.pixsegments (pixsegments), .pixwatermark (watmk), .pix (pix));
+segment2pixel sp(.s (selseg), .p (pixsegments));
+watermark wm(.pixsegments (pixsegments), .pixwatermark (watmk), .pix (pix));
 endmodule
