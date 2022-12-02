@@ -163,10 +163,11 @@ void CompileVerilog(const std::vector<std::string_view> &inputs_v_full_paths,
   // TODO?
   // https://stackoverflow.com/questions/31434380/what-is-a-good-template-yosys-synthesis-script
   Yosys::Pass::call(&yosys_design, "hierarchy -check");
-  Yosys::Pass::call(&yosys_design, "proc");
-  Yosys::Pass::call(&yosys_design, "opt");
-  Yosys::Pass::call(&yosys_design, "memory");
-  Yosys::Pass::call(&yosys_design, "opt -fast");
+  // TODO!!! update for new Yosys version?
+  // Yosys::Pass::call(&yosys_design, "proc");
+  // Yosys::Pass::call(&yosys_design, "opt");
+  // Yosys::Pass::call(&yosys_design, "memory");
+  // Yosys::Pass::call(&yosys_design, "opt -fast");
   // Yosys::Pass::call(&yosys_design, "synth");
   // Yosys::Pass::call(&yosys_design, "opt");
   Yosys::Pass::call(&yosys_design, "techmap");

@@ -1,9 +1,9 @@
 .model full_add
 .inputs a b cin
 .outputs sum cout
-.gate XOR  a=b b=a O=n6
-.gate XOR  a=n6 b=cin O=sum
-.gate NAND a=b b=a O=n8
-.gate NAND a=n6 b=cin O=n9
-.gate NAND a=n9 b=n8 O=cout
+.gate XOR  a=b b=a O=new_n6_
+.gate XOR  a=new_n6_ b=cin O=sum
+.gate NAND a=b b=a O=new_n8_
+.gate NAND a=new_n6_ b=cin O=new_n9_
+.gate NAND a=new_n9_ b=new_n8_ O=cout
 .end

@@ -84,8 +84,8 @@ TEST(FullPipelineTest, ThreadSafeOk) {
 
   auto file_size_result = boost::filesystem::file_size(
       absl::StrCat(output_path.generic_string(), nb_threads - 1, ".skcd"));
-  EXPECT_GT(file_size_result, 100);
-  EXPECT_LT(file_size_result, 120);
+  EXPECT_GT(file_size_result, 135);
+  EXPECT_LT(file_size_result, 155);
 }
 
 TEST(FullPipelineTest, BasicDisplayFileOk) {
