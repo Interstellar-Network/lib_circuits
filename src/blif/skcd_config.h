@@ -11,6 +11,8 @@ enum class GarblerInputsType : uint8_t {
 
 enum class EvaluatorInputsType : uint8_t {
   EVALUATOR_INPUTS_RND,
+  EVALUATOR_INPUTS_CHOOSEN_BY_EVALUATOR,
+  EVALUATOR_INPUTS_CHOOSEN_BY_GARBLER,
 };
 
 struct GarblerInputs {

@@ -114,17 +114,17 @@ void PrepareSkcdPb(const interstellar::BlifParser &blif_parser,
     switch (garbler_input.type) {
       case GarblerInputsType::GARBLER_INPUTS_BUF:
         input_data->set_type(
-            interstellarpbskcd::GarblerInputsType::GARBLER_INPUTS_BUF);
+            interstellarpbskcd::GarblerInputsType::GARBLER_INPUTS_TYPE_BUF);
         break;
 
       case GarblerInputsType::GARBLER_INPUTS_SEVEN_SEGMENTS:
         input_data->set_type(interstellarpbskcd::GarblerInputsType::
-                                 GARBLER_INPUTS_SEVEN_SEGMENTS);
+                                 GARBLER_INPUTS_TYPE_SEVEN_SEGMENTS);
         break;
 
       case GarblerInputsType::GARBLER_INPUTS_WATERMARK:
-        input_data->set_type(
-            interstellarpbskcd::GarblerInputsType::GARBLER_INPUTS_WATERMARK);
+        input_data->set_type(interstellarpbskcd::GarblerInputsType::
+                                 GARBLER_INPUTS_TYPE_WATERMARK);
         break;
     }
     input_data->set_length(garbler_input.length);
@@ -135,7 +135,17 @@ void PrepareSkcdPb(const interstellar::BlifParser &blif_parser,
     switch (evaluator_input.type) {
       case EvaluatorInputsType::EVALUATOR_INPUTS_RND:
         input_data->set_type(
-            interstellarpbskcd::EvaluatorInputsType::EVALUATOR_INPUTS_RND);
+            interstellarpbskcd::EvaluatorInputsType::EVALUATOR_INPUTS_TYPE_RND);
+        break;
+
+      case EvaluatorInputsType::EVALUATOR_INPUTS_CHOOSEN_BY_EVALUATOR:
+        input_data->set_type(interstellarpbskcd::EvaluatorInputsType::
+                                 EVALUATOR_INPUTS_TYPE_CHOOSEN_BY_EVALUATOR);
+        break;
+
+      case EvaluatorInputsType::EVALUATOR_INPUTS_CHOOSEN_BY_GARBLER:
+        input_data->set_type(interstellarpbskcd::EvaluatorInputsType::
+                                 EVALUATOR_INPUTS_TYPE_CHOOSEN_BY_GARBLER);
         break;
     }
     input_data->set_length(evaluator_input.length);
