@@ -20,7 +20,7 @@ jobs:
           wget https://github.com/Interstellar-Network/abc/releases/download/0.2.0/abc-0.1.1-Linux.deb -O abc.deb
           sudo apt-get install -y --no-install-recommends ./abc.deb
 
-      - uses: Interstellar-Network/gh-actions/prepare@v3-dev
+      - uses: Interstellar-Network/gh-actions/prepare@v3
         with:
           ssh_key_input: ${{ inputs.ssh_key_input }}
           install_cmake_and_ninja: true
@@ -29,4 +29,4 @@ jobs:
         run: |
           cat /proc/cpuinfo
 
-      - uses: Interstellar-Network/gh-actions/cmake-build-and-test@v3-dev
+      - uses: Interstellar-Network/gh-actions/cmake-build-and-test@v3
