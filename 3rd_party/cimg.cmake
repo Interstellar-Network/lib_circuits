@@ -11,7 +11,7 @@ FetchContent_Declare(
     # "tagged this Jun 20, 2022"
     # NOTE: URL instead of GIT(even with GIT_SHALLOW ON)
     # real    0m5.298s
-    URL https://github.com/dtschump/CImg/archive/refs/tags/v.3.1.4.tar.gz
+    URL https://github.com/GreycLab/CImg/archive/refs/tags/v.3.2.0.tar.gz
 
     # time git clone https://github.com/dtschump/CImg.git --branch v.3.0.2
     # real    0m15.698s

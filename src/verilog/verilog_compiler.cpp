@@ -162,12 +162,17 @@ void CompileVerilog(const std::vector<std::string_view> &inputs_v_full_paths,
 
   // TODO?
   // https://stackoverflow.com/questions/31434380/what-is-a-good-template-yosys-synthesis-script
+  Yosys::Pass::call(&yosys_design, "hierarchy -check");
+  // TODO!!! update for new Yosys version?
   // Yosys::Pass::call(&yosys_design, "proc");
   // Yosys::Pass::call(&yosys_design, "opt");
+  // Yosys::Pass::call(&yosys_design, "memory");
+  // Yosys::Pass::call(&yosys_design, "opt -fast");
   // Yosys::Pass::call(&yosys_design, "synth");
   // Yosys::Pass::call(&yosys_design, "opt");
   Yosys::Pass::call(&yosys_design, "techmap");
-  // Yosys::Pass::call(&yosys_design, "opt");
+  Yosys::Pass::call(&yosys_design, "opt");
+  // TODO Yosys::Pass::call(&yosys_design, "check -assert");
 
   // Yosys::Pass::call(&yosys_design, "synth -noabc");
   // Yosys::Pass::call(&yosys_design, "abc");
@@ -189,8 +194,10 @@ void CompileVerilog(const std::vector<std::string_view> &inputs_v_full_paths,
   // proc; etc (old size 2) techmap; opt;    real    0m2.573s user    0m2.441s
   // techmap;         real    0m2.060s user    0m1.906s
 
-  Yosys::Pass::call(&yosys_design,
-                    absl::StrCat("write_blif ", output_blif_full_path));
+  Yosys::Pass::call(
+      &yosys_design,
+      // https://www.reddit.com/r/yosys/comments/8vvflm/why_are_some_of_the_wires_nondriven_in_this/
+      absl::StrCat("write_blif -noalias ", output_blif_full_path));
 
   // Calling this will prevent subsequent yosys_setup from working(pass_register
   // would be empty)

@@ -1,4 +1,4 @@
-################################################################################
+# ###############################################################################
 
 add_subdirectory(abc_wrapper)
 add_subdirectory(segments2pixels)
@@ -10,10 +10,10 @@ add_subdirectory(blif)
 add_subdirectory(skcd)
 add_subdirectory(drawable)
 
-################################################################################
-
+# ###############################################################################
 add_library(circuit_lib
     circuit_lib.cpp
+
     # TODO move to separate libs, and under utils/
     utils_noncopyable.cpp
 )

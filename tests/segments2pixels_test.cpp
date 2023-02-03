@@ -55,12 +55,10 @@ TEST(Segments2PixelsTest, BasicDisplayOk) {
   // compare
   auto res_defines_lines =
       absl::StrSplit(segments2pixels.GetDefines(), "\n", absl::SkipEmpty());
-  ASSERT_THAT(
-      res_defines_lines,
-      testing::UnorderedElementsAreArray(
-          {"`define NB_DIGITS 2", "`define RNDSIZE 9", "`define WIDTH 120",
-           "`define HEIGHT 52", "`define BITMAP_NB_SEGMENTS 14",
-           "`define SEGMENTS_TYPE 0", "`define NB_SEGS_PER_DIGIT 7"}));
+  ASSERT_THAT(res_defines_lines,
+              testing::UnorderedElementsAreArray(
+                  {"`define WIDTH 120", "`define BITMAP_NB_SEGMENTS 14",
+                   "`define RNDSIZE 9", "`define HEIGHT 52"}));
 
   EXPECT_EQ(segments2pixels.GenerateVerilog(), expected_str);
 }

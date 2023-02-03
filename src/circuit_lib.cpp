@@ -14,6 +14,7 @@
 
 #include "circuit_lib.h"
 
+#include <absl/random/random.h>
 #include <absl/strings/str_cat.h>
 
 #include "abc_wrapper/abc_wrapper.h"
@@ -30,8 +31,7 @@ namespace {
 
 interstellar::BlifParser GenerateBlifBlif(
     const std::vector<std::string_view> &verilog_inputs_paths,
-    const interstellar::utils::TempDir &tmp_dir,
-    absl::flat_hash_map<std::string, uint32_t> &&config) {
+    const interstellar::utils::TempDir &tmp_dir) {
   auto output_blif_path = tmp_dir.GetPath() / "output.blif";
 
   interstellar::VerilogHelper::CompileVerilog(
@@ -49,21 +49,11 @@ interstellar::BlifParser GenerateBlifBlif(
   // convert .blif.blif -> ~.skcd
   // NOTE: Skcd class was previously used to pass the data around, but it has
   // been replaced by protobuf serialization
-  auto blif_parser = interstellar::BlifParser(std::move(config));
+  auto blif_parser = interstellar::BlifParser();
   auto tmp_blif_blif_str = interstellar::utils::ReadFile(final_blif_blif_path);
-  blif_parser.ParseBuffer(tmp_blif_blif_str, true);
+  blif_parser.ParseBuffer(tmp_blif_blif_str);
 
   return blif_parser;
-}
-
-/**
- * overload GenerateBlifBlif with an empty config
- */
-interstellar::BlifParser GenerateBlifBlif(
-    const std::vector<std::string_view> &verilog_inputs_paths,
-    const interstellar::utils::TempDir &tmp_dir) {
-  absl::flat_hash_map<std::string, uint32_t> config;
-  return GenerateBlifBlif(verilog_inputs_paths, tmp_dir, std::move(config));
 }
 
 /**
@@ -97,24 +87,6 @@ namespace circuits {
 
 // TODO how to handle InitGoogleLogging ?
 
-void GenerateSkcd(boost::filesystem::path skcd_output_path,
-                  const std::vector<std::string_view> &verilog_inputs_paths,
-                  const utils::TempDir &tmp_dir) {
-  auto blif_parser = GenerateBlifBlif(verilog_inputs_paths, tmp_dir);
-
-  interstellar::skcd::WriteToFile(skcd_output_path, blif_parser);
-}
-
-std::string GenerateSkcd(
-    const std::vector<std::string_view> &verilog_inputs_paths,
-    const utils::TempDir &tmp_dir,
-    absl::flat_hash_map<std::string, uint32_t> &&config) {
-  auto blif_parser =
-      GenerateBlifBlif(verilog_inputs_paths, tmp_dir, std::move(config));
-
-  return interstellar::skcd::Serialize(blif_parser);
-}
-
 /**
  * [internal]
  */
@@ -124,19 +96,6 @@ void GenerateSkcd(boost::filesystem::path skcd_output_path,
   auto blif_parser = GenerateBlifBlif(verilog_inputs_paths, tmp_dir);
 
   interstellar::skcd::WriteToFile(skcd_output_path, blif_parser);
-}
-
-/**
- * [internal]
- */
-std::string GenerateSkcd(
-    const std::vector<std::string_view> &verilog_inputs_paths,
-    absl::flat_hash_map<std::string, uint32_t> &&config) {
-  auto tmp_dir = utils::TempDir();
-  auto blif_parser =
-      GenerateBlifBlif(verilog_inputs_paths, tmp_dir, std::move(config));
-
-  return interstellar::skcd::Serialize(blif_parser);
 }
 
 /**
@@ -153,18 +112,16 @@ std::string GenerateSkcd(
 void GenerateDisplaySkcd(
     boost::filesystem::path skcd_output_path, u_int32_t width, u_int32_t height,
     circuits::DisplayDigitType digit_type,
-    std::vector<std::tuple<float, float, float, float>> &&digits_bboxes,
-    std::unordered_map<std::string, uint32_t> *skcd_config) {
-  auto result_skcd_buf = GenerateDisplaySkcd(
-      width, height, digit_type, std::move(digits_bboxes), skcd_config);
+    std::vector<std::tuple<float, float, float, float>> &&digits_bboxes) {
+  auto result_skcd_buf =
+      GenerateDisplaySkcd(width, height, digit_type, std::move(digits_bboxes));
 
   utils::WriteToFile(skcd_output_path, result_skcd_buf);
 }
 
 std::string GenerateDisplaySkcd(
     u_int32_t width, u_int32_t height, DisplayDigitType digit_type,
-    std::vector<std::tuple<float, float, float, float>> &&digits_bboxes,
-    std::unordered_map<std::string, uint32_t> *skcd_config) {
+    std::vector<std::tuple<float, float, float, float>> &&digits_bboxes) {
   auto tmp_dir = utils::TempDir();
 
   const auto &what_to_draw = GetDrawableFromDigitType(digit_type);
@@ -180,7 +137,6 @@ std::string GenerateDisplaySkcd(
   // [1] generate Verilog segments2pixels.v
   auto segments2pixels = Segments2Pixels(width, height, drawables);
   auto segments2pixels_v_str = segments2pixels.GenerateVerilog();
-  auto config = segments2pixels.GetConfig();
 
   // write this to segments2pixels.v (in the temp dir)
   // because Yosys only handles files, not buffers
@@ -193,20 +149,20 @@ std::string GenerateDisplaySkcd(
   auto defines_v_path = tmp_dir.GetPath() / "defines.v";
   utils::WriteToFile(defines_v_path, defines_v_str);
 
-  // copy(return) the config
-  for (auto const &[key, val] : config) {
-    (*skcd_config)[key] = val;
-  }
-
-  std::string result_skcd_buf = GenerateSkcd(
+  auto blif_parser = GenerateBlifBlif(
       {
           defines_v_path.generic_string(),
           segments2pixels_v_path.generic_string(),
           absl::StrCat(interstellar::data_dir, "/verilog/rndswitch.v"),
           absl::StrCat(interstellar::data_dir, "/verilog/xorexpand.v"),
+          absl::StrCat(interstellar::data_dir, "/verilog/watermark.v"),
           absl::StrCat(interstellar::data_dir, "/verilog/display-main.v"),
       },
-      std::move(config));
+      tmp_dir);
+
+  blif_parser.ReplaceConfig(segments2pixels.GetConfig());
+
+  std::string result_skcd_buf = interstellar::skcd::Serialize(blif_parser);
 
   return result_skcd_buf;
 }

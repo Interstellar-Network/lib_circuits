@@ -36,9 +36,7 @@ template <typename DrawableWhereT>
 Segments2Pixels<DrawableWhereT>::Segments2Pixels(
     uint32_t width, uint32_t height,
     const std::vector<drawable::Drawable<DrawableWhereT>>& drawables)
-    : width_(width), height_(height), drawables_(drawables) {
-  uint32_t nb_digits = drawables_.size();
-
+    : drawables_(drawables) {
   // CHECK drawables MUST NOT be empty
   // We could return early instead of throwing but generating and then garbling
   // a circuit with no input does not really make sense.
@@ -50,16 +48,18 @@ Segments2Pixels<DrawableWhereT>::Segments2Pixels(
   // CHECK that all Drawable are the same class
   drawable::DigitSegmentsType segments_type = drawables_[0].What().GetType();
   uint32_t nb_segs_per_digit = drawables_[0].What().GetNbSegments();
+  u_int32_t nb_segments = 0;
   for (const auto& drawable : drawables_) {
     if (drawable.What().GetType() != segments_type) {
       throw std::logic_error(
           "Segments2Pixels: drawing different digits is not allowed");
     }
-    nb_segments_ += drawable.What().GetNbSegments();
+    nb_segments += drawable.What().GetNbSegments();
   }
 
-  assert(nb_segments_ == nb_digits * nb_segs_per_digit &&
-         "nb_segments mismatch!");
+  if (nb_segments != drawables_.size() * nb_segs_per_digit) {
+    throw std::logic_error("Segments2Pixels: nb_segments mismatch!");
+  }
 
   // RNDSIZE
   // TODO Check
@@ -67,14 +67,20 @@ Segments2Pixels<DrawableWhereT>::Segments2Pixels(
   // RNDSIZE=9, and pinpad RNDSIZE=16
   // math.ceil(0.5 * math.sqrt(8 * otp_length * message_seg + 1) + 1)
   auto rndsize = static_cast<unsigned int>(
-      std::max(std::ceil(0.5 * std::sqrt(8 * nb_segments_ + 1) + 1), 9.));
-  config_ = {{"WIDTH", width_},
-             {"HEIGHT", height_},
-             {"BITMAP_NB_SEGMENTS", nb_segments_},
-             {"RNDSIZE", rndsize},
-             {"NB_DIGITS", nb_digits},
-             {"NB_SEGS_PER_DIGIT", nb_segs_per_digit},
-             {"SEGMENTS_TYPE", static_cast<uint32_t>(segments_type)}};
+      std::max(std::ceil(0.5 * std::sqrt(8 * nb_segments + 1) + 1), 9.));
+
+  config_.garbler_inputs.emplace_back(GarblerInputsType::GARBLER_INPUTS_BUF, 1);
+  config_.garbler_inputs.emplace_back(
+      GarblerInputsType::GARBLER_INPUTS_SEVEN_SEGMENTS, nb_segments);
+  config_.garbler_inputs.emplace_back(
+      GarblerInputsType::GARBLER_INPUTS_WATERMARK, width * height);
+
+  config_.evaluator_inputs.emplace_back(
+      EvaluatorInputsType::EVALUATOR_INPUTS_RND, rndsize);
+
+  config_.display_config.width = width;
+  config_.display_config.height = height;
+  config_.display_config.segments_type = static_cast<uint32_t>(segments_type);
 }
 
 template <typename DrawableWhereT>
@@ -82,21 +88,30 @@ std::string Segments2Pixels<DrawableWhereT>::GenerateVerilog() const {
   // Generate the complete bitmap, then compute the SegmentID for each pixel
   // Previously it was done is the ctor then stored in class member but it is
   // only used here so no point in doing that
+  auto width = config_.display_config.width;
+  auto height = config_.display_config.height;
+  unsigned int nb_pixels = width * height;
   std::vector<drawable::SegmentID> bitmap_seg_ids =
-      Draw(drawables_, width_, height_);
+      Draw(drawables_, width, height);
 
   std::vector<utils::RLE_int8_t> bitmap_seg_ids_rle =
       utils::compress_rle(bitmap_seg_ids);
 
   std::string verilog_buf;
-  unsigned int nb_inputs = nb_segments_ - 1,
-               nb_outputs = (width_ * height_) - 1;
+
+  assert(config_.garbler_inputs[1].type ==
+             GarblerInputsType::GARBLER_INPUTS_SEVEN_SEGMENTS &&
+         "wrong config order in ::Segments2Pixels?");
+  assert(config_.garbler_inputs[2].type ==
+             GarblerInputsType::GARBLER_INPUTS_WATERMARK &&
+         "wrong config order in ::Segments2Pixels?");
+  assert(config_.garbler_inputs[2].length == nb_pixels && "wrong config!");
+  unsigned int nb_inputs = config_.garbler_inputs[1].length;
 
   // without reserve : 1657472 - 1771623 (ns)
   // with reserve : 1250652 - 1356733 (ns)
   // Now in the .v, ranges are encoded as eg: assign p[75295:75287] = 0;
   // So we really do not need much memory.
-  unsigned int nb_pixels = width_ * height_;
   size_t size_to_reserve =
       ((nb_pixels * strlen("assign p[000000] = s[0000];\n")) / 5) + 1000;
   verilog_buf.reserve(size_to_reserve);
@@ -109,9 +124,9 @@ std::string Segments2Pixels<DrawableWhereT>::GenerateVerilog() const {
   verilog_buf += "module segment2pixel(s, p);  // convert segments to pixels\n";
   // TODO
   verilog_buf +=
-      fmt::format("input [{:d}:0] s; // segments to display\n", nb_inputs);
+      fmt::format("input [{:d}:0] s; // segments to display\n", nb_inputs - 1);
   verilog_buf +=
-      fmt::format("output [{:d}:0] p;  // pixels output\n", nb_outputs);
+      fmt::format("output [{:d}:0] p;  // pixels output\n", nb_pixels - 1);
 
   // TODO use absl or fmtlib
   size_t pixels_counter = 0;
@@ -163,9 +178,23 @@ template <typename DrawableWhereT>
 std::string Segments2Pixels<DrawableWhereT>::GetDefines() const {
   auto verilog_defines = verilog::Defines();
   // NOTE: probably NOT all the config keys are needed on the Verilog side
-  for (auto const& [key, val] : config_) {
-    verilog_defines.AddDefine(key, val);
-  }
+  // We only need:
+  // BITMAP_NB_SEGMENTS
+  // WIDTH
+  // HEIGHT
+  // RNDSIZE
+  assert(config_.garbler_inputs[1].type ==
+             GarblerInputsType::GARBLER_INPUTS_SEVEN_SEGMENTS &&
+         "wrong config order in ::Segments2Pixels?");
+  verilog_defines.AddDefine("BITMAP_NB_SEGMENTS",
+                            config_.garbler_inputs[1].length);
+  verilog_defines.AddDefine("WIDTH", config_.display_config.width);
+  verilog_defines.AddDefine("HEIGHT", config_.display_config.height);
+
+  assert(config_.evaluator_inputs[0].type ==
+             EvaluatorInputsType::EVALUATOR_INPUTS_RND &&
+         "wrong config order in ::Segments2Pixels?");
+  verilog_defines.AddDefine("RNDSIZE", config_.evaluator_inputs[0].length);
 
   return verilog_defines.GetDefinesVerilog();
 }
@@ -175,8 +204,7 @@ std::string Segments2Pixels<DrawableWhereT>::GetDefines() const {
  * the Verilog side.
  */
 template <typename DrawableWhereT>
-const absl::flat_hash_map<std::string, uint32_t>&
-Segments2Pixels<DrawableWhereT>::GetConfig() const {
+const SkcdConfig& Segments2Pixels<DrawableWhereT>::GetConfig() const {
   return config_;
 }
 

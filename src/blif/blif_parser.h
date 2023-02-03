@@ -14,17 +14,14 @@
 
 #pragma once
 
-#include <absl/container/flat_hash_map.h>
-
 #include <cmath>
 #include <memory>
 #include <random>
 #include <string>
 #include <vector>
 
-#include "circuit_data.h"
 #include "gate_types.h"
-#include "my_random.h"
+#include "skcd_config.h"
 
 namespace interstellar {
 
@@ -37,21 +34,15 @@ class Label {
  * Basic .blif parser.
  * Used to parse the blif juste before conversion to .skcd
  *
+ * As of the latest refactor (for Swanky/Rust, late 2022) .skcd is now
+ * a basic raw mapping of the .blif format.
+ * IE no more gate rewriting (to XOR), no label recomputation via Hashmap, etc
+ *
  * WARNING: only parses a subset of .blif !
  */
 class BlifParser {
  public:
-  /**
-   * config: usually a variation of the Verilog `define
-   */
-  BlifParser(absl::flat_hash_map<std::string, uint32_t> &&config);
-
-  // DEV/TEST
-  // Used during tests to use a fake PRNG, needed to have a determistic output
-  // of Parse*() with "zero=True"
-  // TODO remove when NOT a test build
-  BlifParser(absl::flat_hash_map<std::string, uint32_t> &&config,
-             std::shared_ptr<RandomInterface> random);
+  BlifParser();
 
   // Disable copy semantics.
   BlifParser(const BlifParser &) = delete;
@@ -63,63 +54,27 @@ class BlifParser {
   // TODO handle the '-z' option, see lib_python
   // TODO return a struct/class
   // TODO string_view
-  void ParseBuffer(std::string_view blif_buffer, bool zero);
-
-  unsigned int Getn() const { return n_; }
-
-  unsigned int Getm() const { return m_; }
-
-  unsigned int Getq() const { return q_; }
+  void ParseBuffer(std::string_view blif_buffer);
 
   // WARNING: the functions below return REF on the internal vectors;
   // They are used when constructing the Skcd, by move so ref is fine.
 
-  const std::vector<unsigned int> &GetA() const { return A_; }
+  const std::vector<SkcdGate> &GetGates() const { return gates_; }
 
-  const std::vector<unsigned int> &GetB() const { return B_; }
+  const std::vector<std::string> &GetOutputs() const { return outputs_; }
 
-  const std::vector<unsigned int> &GetGO() const { return GO_; }
+  const std::vector<std::string> &GetInputs() const { return inputs_; }
 
-  const std::vector<SkcdGateType> &GetGT() const { return GT_; }
+  const SkcdConfig &GetConfig() const { return config_; }
 
-  const std::vector<unsigned int> &GetO() const { return O_; }
-
-  const CircuitData &GetCircuitData() const { return circuit_data_; }
-
-  const absl::flat_hash_map<std::string, uint32_t> &GetConfig() const {
-    return config_;
-  }
+  void ReplaceConfig(const SkcdConfig &other);
 
  private:
-  // Basic deps injection to use a fake PRNG during tests
-  std::shared_ptr<RandomInterface> random_;
+  std::vector<SkcdGate> gates_;
+  std::vector<std::string> outputs_;  // outputs
+  std::vector<std::string> inputs_;   // inputs
 
-  unsigned int n_ = 0;  // inputs number
-  unsigned int m_ = 0;  // outputs number
-  unsigned int q_ = 0;  // gates number
-
-  // Vector of "label index"(except GT)
-  std::vector<unsigned int> A_;   // gates first inputs
-  std::vector<unsigned int> B_;   // gates second inputs
-  std::vector<unsigned int> GO_;  // gates outputs
-  std::vector<SkcdGateType> GT_;  // gates types
-  std::vector<unsigned int> O_;   // outputs
-
-  // Associate a label(as hashed string/string_view) to a index(0-N)
-  // TODO(unordered_map?) replace by array LUT?
-  std::unordered_map<uint64_t, size_t> labels_map_;
-  // size_t current_label_count_ = 0;
-
-  // TODO? but does it make sense when using an temporary file .skcd?
-  CircuitData circuit_data_;
-
-  absl::flat_hash_map<std::string, uint32_t> config_;
-
-  /**
-   * "Unlike other string types, you should pass string_view by value just like
- you would an int or a double because string_view is a small value."
-   */
-  uint32_t GetLabel(std::string_view lbl);
+  SkcdConfig config_;
 };
 
 }  // namespace interstellar
