@@ -174,8 +174,7 @@ void CompileVerilog(const std::vector<std::string_view> &inputs_v_full_paths,
   Yosys::Pass::call(&yosys_design, "fsm");
 	Yosys::Pass::call(&yosys_design, "opt");
   Yosys::Pass::call(&yosys_design, "wreduce");
-  // TODO fix: "ERROR: No such command: peepopt"
-  // Yosys::Pass::call(&yosys_design, "peepopt");
+  Yosys::Pass::call(&yosys_design, "peepopt");
   Yosys::Pass::call(&yosys_design, "opt_clean");
   // Yosys::Pass::call(&yosys_design, "techmap -map +/cmp2lut.v -map +/cmp2lcu.v");
   Yosys::Pass::call(&yosys_design, "alumacc");
