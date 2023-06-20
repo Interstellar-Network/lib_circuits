@@ -111,16 +111,17 @@ std::string GenerateSkcd(
 
 void GenerateDisplaySkcd(
     boost::filesystem::path skcd_output_path, u_int32_t width, u_int32_t height,
-    circuits::DisplayDigitType digit_type,
+    circuits::DisplayDigitType digit_type, bool has_watermark,
     std::vector<std::tuple<float, float, float, float>> &&digits_bboxes) {
-  auto result_skcd_buf =
-      GenerateDisplaySkcd(width, height, digit_type, std::move(digits_bboxes));
+  auto result_skcd_buf = GenerateDisplaySkcd(
+      width, height, digit_type, has_watermark, std::move(digits_bboxes));
 
   utils::WriteToFile(skcd_output_path, result_skcd_buf);
 }
 
 std::string GenerateDisplaySkcd(
     u_int32_t width, u_int32_t height, DisplayDigitType digit_type,
+    bool has_watermark,
     std::vector<std::tuple<float, float, float, float>> &&digits_bboxes) {
   auto tmp_dir = utils::TempDir();
 
@@ -135,7 +136,8 @@ std::string GenerateDisplaySkcd(
   }
 
   // [1] generate Verilog segments2pixels.v
-  auto segments2pixels = Segments2Pixels(width, height, drawables);
+  auto segments2pixels =
+      Segments2Pixels(width, height, drawables, has_watermark);
   auto segments2pixels_v_str = segments2pixels.GenerateVerilog();
 
   // write this to segments2pixels.v (in the temp dir)

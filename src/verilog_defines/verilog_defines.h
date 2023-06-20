@@ -16,7 +16,9 @@
 #include <absl/container/flat_hash_map.h>
 
 #include <initializer_list>
+#include <optional>
 #include <string>
+#include <string_view>
 
 namespace interstellar {
 
@@ -38,6 +40,8 @@ class Defines {
 
   void AddDefine(std::string_view key, uint32_t value);
 
+  void AddDefine(std::string_view key);
+
   /**
    * Return the defines properly formatted as Verilog
    * eg:
@@ -49,7 +53,7 @@ class Defines {
   std::string GetDefinesVerilog();
 
  private:
-  absl::flat_hash_map<std::string, std::string> defines_map_;
+  absl::flat_hash_map<std::string, std::optional<std::string>> defines_map_;
 };
 
 }  // namespace verilog

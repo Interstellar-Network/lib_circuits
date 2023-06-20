@@ -26,6 +26,8 @@ ABSL_FLAG(u_int32_t, width, 1280 / 2, "width");
 ABSL_FLAG(u_int32_t, height, 720 / 2, "height");
 ABSL_FLAG(u_int32_t, nb_digits, 2, "nb_digits");
 ABSL_FLAG(bool, is_message, true, "is_message");
+ABSL_FLAG(bool, has_watermark, true,
+          "has_watermark: cf HAS_WATERMARK in data/verilog/");
 
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
@@ -36,6 +38,7 @@ int main(int argc, char** argv) {
   auto height = absl::GetFlag(FLAGS_height);
   auto nb_digits = absl::GetFlag(FLAGS_nb_digits);
   auto is_message = absl::GetFlag(FLAGS_is_message);
+  auto has_watermark = absl::GetFlag(FLAGS_has_watermark);
 
   std::vector<std::tuple<float, float, float, float>> digits_bboxes;
 
@@ -57,7 +60,7 @@ int main(int argc, char** argv) {
 
   circuits::GenerateDisplaySkcd(output_skcd_path, width, height,
                                 circuits::DisplayDigitType::seven_segments_png,
-                                std::move(digits_bboxes));
+                                has_watermark, std::move(digits_bboxes));
 
   return 0;
 }

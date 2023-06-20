@@ -32,14 +32,27 @@ void Defines::AddDefine(std::string_view key, std::string_view value) {
     throw std::runtime_error("key MUST NOT start with a backtick(`)!");
   }
 
-  defines_map_.try_emplace(key, value);
+  defines_map_.try_emplace(key, std::make_optional(value));
   assert(defines_map_.at(key) == value && "new value was not updated!");
+}
+
+void Defines::AddDefine(std::string_view key) {
+  if (absl::StartsWith(key, "`")) {
+    throw std::runtime_error("key MUST NOT start with a backtick(`)!");
+  }
+
+  defines_map_.try_emplace(key, std::nullopt);
+  assert(defines_map_.at(key) == std::nullopt && "new value was not updated!");
 }
 
 std::string Defines::GetDefinesVerilog() {
   std::string defines_buf;
   for (auto const& [key, val] : defines_map_) {
-    absl::StrAppend(&defines_buf, "`define ", key, " ", val, "\n");
+    if (val) {
+      absl::StrAppend(&defines_buf, "`define ", key, " ", *val, "\n");
+    } else {
+      absl::StrAppend(&defines_buf, "`define ", key, "\n");
+    }
   }
 
   return defines_buf;

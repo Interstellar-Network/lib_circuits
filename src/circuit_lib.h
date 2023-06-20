@@ -55,7 +55,7 @@ enum class DisplayDigitType { seven_segments_png };
  */
 void GenerateDisplaySkcd(
     boost::filesystem::path skcd_output_path, u_int32_t width, u_int32_t height,
-    DisplayDigitType digit_type,
+    DisplayDigitType digit_type, bool has_watermark,
     std::vector<std::tuple<float, float, float, float>> &&digits_bboxes);
 
 /**
@@ -86,6 +86,7 @@ void GenerateDisplaySkcd(
  */
 std::string GenerateDisplaySkcd(
     u_int32_t width, u_int32_t height, DisplayDigitType digit_type,
+    bool has_watermark,
     std::vector<std::tuple<float, float, float, float>> &&digits_bboxes);
 
 }  // namespace circuits

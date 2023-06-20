@@ -45,7 +45,8 @@ TEST(Segments2PixelsTest, BasicDisplayOk) {
       seven_segs_png);
 
   // ~ minimal size that still displays all the segments in lib_garble's eval
-  auto segments2pixels = interstellar::Segments2Pixels(120, 52, drawables);
+  auto segments2pixels =
+      interstellar::Segments2Pixels(120, 52, drawables, true);
 
   auto expected_str = interstellar::utils::ReadFile(
       absl::StrCat(interstellar::test::test_data_dir,
@@ -55,10 +56,13 @@ TEST(Segments2PixelsTest, BasicDisplayOk) {
   // compare
   auto res_defines_lines =
       absl::StrSplit(segments2pixels.GetDefines(), "\n", absl::SkipEmpty());
-  ASSERT_THAT(res_defines_lines,
-              testing::UnorderedElementsAreArray(
-                  {"`define WIDTH 120", "`define BITMAP_NB_SEGMENTS 14",
-                   "`define RNDSIZE 9", "`define HEIGHT 52"}));
+  ASSERT_THAT(res_defines_lines, testing::UnorderedElementsAreArray({
+                                     "`define WIDTH 120",
+                                     "`define BITMAP_NB_SEGMENTS 14",
+                                     "`define RNDSIZE 9",
+                                     "`define HEIGHT 52",
+                                     "`define HAS_WATERMARK",
+                                 }));
 
   EXPECT_EQ(segments2pixels.GenerateVerilog(), expected_str);
 }

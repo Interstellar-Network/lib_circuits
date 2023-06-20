@@ -45,11 +45,15 @@ class Segments2Pixels {
    * here all the way to the Packmsg.
    * To generate the correct OTP/permutation in the Packmsg we MUST make sure
    * what we draw here matches the Packmsg.
+   *
+   * has_watermark: matches ifdef "HAS_WATERMARK" in
+   * lib_circuits_wrapper/deps/lib_circuits/data/verilog/display-main.v
    */
   // TODO Span for "drawables"
   Segments2Pixels(
       uint32_t width, uint32_t height,
-      const std::vector<drawable::Drawable<DrawableWhereT>>& drawables);
+      const std::vector<drawable::Drawable<DrawableWhereT>>& drawables,
+      bool has_watermark);
 
   // Disable copy semantics.
   Segments2Pixels(const Segments2Pixels&) = delete;
@@ -68,6 +72,7 @@ class Segments2Pixels {
  private:
   const std::vector<drawable::Drawable<DrawableWhereT>>& drawables_;
   SkcdConfig config_;
+  bool has_watermark_;
 };
 
 }  // namespace interstellar
