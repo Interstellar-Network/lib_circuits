@@ -69,14 +69,14 @@ Segments2Pixels<DrawableWhereT>::Segments2Pixels(
   auto rndsize = static_cast<unsigned int>(
       std::max(std::ceil(0.5 * std::sqrt(8 * nb_segments + 1) + 1), 9.));
 
-  config_.garbler_inputs.emplace_back(GarblerInputsType::GARBLER_INPUTS_BUF, 1);
+  config_.garbler_inputs.emplace_back(GarblerInputs{GarblerInputsType::GARBLER_INPUTS_BUF, 1});
   config_.garbler_inputs.emplace_back(
-      GarblerInputsType::GARBLER_INPUTS_SEVEN_SEGMENTS, nb_segments);
+      GarblerInputs{GarblerInputsType::GARBLER_INPUTS_SEVEN_SEGMENTS, nb_segments});
   config_.garbler_inputs.emplace_back(
-      GarblerInputsType::GARBLER_INPUTS_WATERMARK, width * height);
+      GarblerInputs{GarblerInputsType::GARBLER_INPUTS_WATERMARK, width * height});
 
   config_.evaluator_inputs.emplace_back(
-      EvaluatorInputsType::EVALUATOR_INPUTS_RND, rndsize);
+      EvaluatorInputs{EvaluatorInputsType::EVALUATOR_INPUTS_RND, rndsize});
 
   config_.display_config.width = width;
   config_.display_config.height = height;
