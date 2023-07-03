@@ -249,7 +249,7 @@ void BlifParser::ParseBuffer(std::string_view blif_buffer) {
   // there no way in the .blif file format to make it work with Two Party
   // Computation...
   config_.evaluator_inputs.emplace_back(
-      EvaluatorInputsType::EVALUATOR_INPUTS_RND, inputs_vect.size());
+      EvaluatorInputs{EvaluatorInputsType::EVALUATOR_INPUTS_RND, static_cast<uint32_t>(inputs_vect.size())});
   assert(config_.evaluator_inputs.size() && "BlifParser: inputs not set!");
 }
 

@@ -7,7 +7,7 @@ FetchContent_Declare(
   # "Abseil recommends users "live-at-head" (update to the latest commit from the master branch as often as possible)."
   # but we use LTS branch for now
   GIT_REPOSITORY https://github.com/abseil/abseil-cpp.git
-  GIT_TAG 20220623.1
+  GIT_TAG 20230125.3
 )
 
 # avoids a warning:
@@ -19,3 +19,10 @@ option(ABSL_PROPAGATE_CXX_STD
   ON) # default to OFF
 
 FetchContent_MakeAvailable(abseil)
+
+target_compile_options(absl_crc32c
+  PRIVATE
+
+  # error: ignoring attributes on template argument ‘__m128i’ [-Werror=ignored-attributes]
+  -Wno-ignored-attributes
+)

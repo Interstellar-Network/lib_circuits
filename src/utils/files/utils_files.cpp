@@ -17,6 +17,7 @@
 #include <absl/random/random.h>
 #include <absl/strings/str_cat.h>
 #include <glog/logging.h>
+#include <fstream>
 
 // the final tmp dir is "/tmp/${kTmpSubDir}/${random_string}/"
 static constexpr char kTmpSubDir[] = "interstellar-circuits";

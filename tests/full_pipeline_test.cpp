@@ -99,7 +99,7 @@ TEST(FullPipelineTest, BasicDisplayFileOk) {
 
   circuits::GenerateDisplaySkcd(output_skcd_path, 120, 52,
                                 circuits::DisplayDigitType::seven_segments_png,
-                                std::move(digits_bboxes));
+                                true, std::move(digits_bboxes));
 
   // TODO ideally we would want to compare functionally
   // ie are those the same gates? inputs? outputs? etc

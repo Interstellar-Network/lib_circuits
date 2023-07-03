@@ -10,13 +10,21 @@ set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(
     glog
 
-    # v0.5.0 released this May 08, 2021
-    # but it does NOT compile with clang 13 and all the warnings
+    # latest release is v0.6 but it is from 2022 and does not compile with Clang 15
     GIT_REPOSITORY https://github.com/google/glog.git
-
-    GIT_TAG v0.6.0
+    GIT_TAG 3a0d4d22c5ae0b9a2216988411cfa6bf860cc372
 )
 
 FetchContent_MakeAvailable(glog)
 
 set(BUILD_TESTING "${BUILD_TESTING_SAVED}" CACHE BOOL "" FORCE)
+
+target_compile_options(glog_internal
+    PRIVATE
+
+    # glog-src/src/symbolize.cc:538:12: error: variable 'num_maps' set but not used [-Werror,-Wunused-but-set-variable]
+    # unsigned num_maps = 0;
+    $<$<CXX_COMPILER_ID:Clang>:
+    -Wno-unused-but-set-variable
+    >
+)

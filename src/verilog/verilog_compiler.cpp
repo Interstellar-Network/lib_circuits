@@ -160,19 +160,42 @@ void CompileVerilog(const std::vector<std::string_view> &inputs_v_full_paths,
       &yosys_design,
       absl::StrCat("read_verilog ", absl::StrJoin(inputs_v_full_paths, " ")));
 
-  // TODO?
-  // https://stackoverflow.com/questions/31434380/what-is-a-good-template-yosys-synthesis-script
+  	// TODO?
+	// https://stackoverflow.com/questions/31434380/what-is-a-good-template-yosys-synthesis-script
+  // Yosys::Pass::call(&yosys_design, "synth"); -> this is sort of the commands below:
+  // CHECK: the default with "./yosys_exe" > "help synth"
   Yosys::Pass::call(&yosys_design, "hierarchy -check");
-  // TODO!!! update for new Yosys version?
-  // Yosys::Pass::call(&yosys_design, "proc");
-  // Yosys::Pass::call(&yosys_design, "opt");
-  // Yosys::Pass::call(&yosys_design, "memory");
-  // Yosys::Pass::call(&yosys_design, "opt -fast");
-  // Yosys::Pass::call(&yosys_design, "synth");
-  // Yosys::Pass::call(&yosys_design, "opt");
-  Yosys::Pass::call(&yosys_design, "techmap");
+	Yosys::Pass::call(&yosys_design, "proc");
+  Yosys::Pass::call(&yosys_design, "flatten");
+  Yosys::Pass::call(&yosys_design, "opt_expr");
+  Yosys::Pass::call(&yosys_design, "opt_clean");
+  Yosys::Pass::call(&yosys_design, "check");
+  Yosys::Pass::call(&yosys_design, "opt -nodffe -nosdff");
+  Yosys::Pass::call(&yosys_design, "fsm");
+	Yosys::Pass::call(&yosys_design, "opt");
+  Yosys::Pass::call(&yosys_design, "wreduce");
+  Yosys::Pass::call(&yosys_design, "peepopt");
+  Yosys::Pass::call(&yosys_design, "opt_clean");
+  // Yosys::Pass::call(&yosys_design, "techmap -map +/cmp2lut.v -map +/cmp2lcu.v");
+  Yosys::Pass::call(&yosys_design, "alumacc");
+  Yosys::Pass::call(&yosys_design, "share");
   Yosys::Pass::call(&yosys_design, "opt");
-  // TODO Yosys::Pass::call(&yosys_design, "check -assert");
+  Yosys::Pass::call(&yosys_design, "memory -nomap");
+  Yosys::Pass::call(&yosys_design, "opt_clean");
+
+  Yosys::Pass::call(&yosys_design, "opt -fast -full");
+  Yosys::Pass::call(&yosys_design, "memory_map");
+  Yosys::Pass::call(&yosys_design, "opt -full");
+  Yosys::Pass::call(&yosys_design, "techmap");
+  // Yosys::Pass::call(&yosys_design, "techmap -map +/gate2lut.v");
+  // Yosys::Pass::call(&yosys_design, "clean; opt_lut");
+  // Yosys::Pass::call(&yosys_design, "flowmap -maxlut K");
+  Yosys::Pass::call(&yosys_design, "opt -fast");
+
+  // TODO? with or without: -assert?
+  Yosys::Pass::call(&yosys_design, "hierarchy -check");
+  Yosys::Pass::call(&yosys_design, "stat");
+  Yosys::Pass::call(&yosys_design, "check");
 
   // Yosys::Pass::call(&yosys_design, "synth -noabc");
   // Yosys::Pass::call(&yosys_design, "abc");

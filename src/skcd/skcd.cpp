@@ -15,6 +15,7 @@
 #include "skcd.h"
 
 #include <glog/logging.h>
+#include <fstream>
 
 #include "blif/gate_types.h"
 #include "skcd.pb.h"

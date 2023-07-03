@@ -15,7 +15,7 @@ jobs:
       - name: install "internal" dependencies
         # TODO yosys: use proper Release build
         run: |
-          wget https://github.com/Interstellar-Network/yosys/releases/download/yosys-0.23-interstellar/yosys-0.1.1-Linux.deb -O yosys.deb
+          wget https://github.com/Interstellar-Network/yosys/releases/download/yosys-0.29/yosys-0.1.29-Linux.deb -O yosys.deb
           sudo apt-get install -y --no-install-recommends ./yosys.deb
           wget https://github.com/Interstellar-Network/abc/releases/download/0.2.0/abc-0.1.1-Linux.deb -O abc.deb
           sudo apt-get install -y --no-install-recommends ./abc.deb

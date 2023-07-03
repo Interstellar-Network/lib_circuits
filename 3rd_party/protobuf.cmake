@@ -3,9 +3,7 @@ include(FetchContent)
 FetchContent_Declare(
   protobuf_fetch
   GIT_REPOSITORY https://github.com/protocolbuffers/protobuf.git
-  GIT_TAG v21.12
-
-  SOURCE_SUBDIR cmake
+  GIT_TAG v23.3
 )
 
 option(protobuf_INSTALL "Install protobuf binaries and files" OFF) # default ON
@@ -29,7 +27,10 @@ set(PROTO_CXX_FLAGS
   -Wno-unused-function
   -Wno-missing-field-initializers
   $<$<CXX_COMPILER_ID:Clang>:
-  -Wno-invalid-noreturn
+
+  # it SHOULD work b/c C++20 is officially supported; but issue ONLY with recent Clang
+  # https://github.com/protocolbuffers/protobuf/pull/12870
+  -std=c++17
   >
   $<$<CXX_COMPILER_ID:GNU>:
   -Wno-stringop-overflow

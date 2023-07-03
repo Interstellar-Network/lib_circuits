@@ -35,7 +35,8 @@ namespace interstellar {
 template <typename DrawableWhereT>
 Segments2Pixels<DrawableWhereT>::Segments2Pixels(
     uint32_t width, uint32_t height,
-    const std::vector<drawable::Drawable<DrawableWhereT>>& drawables)
+    const std::vector<drawable::Drawable<DrawableWhereT>>& drawables,
+    bool has_watermark)
     : drawables_(drawables) {
   // CHECK drawables MUST NOT be empty
   // We could return early instead of throwing but generating and then garbling
@@ -69,18 +70,23 @@ Segments2Pixels<DrawableWhereT>::Segments2Pixels(
   auto rndsize = static_cast<unsigned int>(
       std::max(std::ceil(0.5 * std::sqrt(8 * nb_segments + 1) + 1), 9.));
 
-  config_.garbler_inputs.emplace_back(GarblerInputsType::GARBLER_INPUTS_BUF, 1);
   config_.garbler_inputs.emplace_back(
-      GarblerInputsType::GARBLER_INPUTS_SEVEN_SEGMENTS, nb_segments);
-  config_.garbler_inputs.emplace_back(
-      GarblerInputsType::GARBLER_INPUTS_WATERMARK, width * height);
+      GarblerInputs{GarblerInputsType::GARBLER_INPUTS_BUF, 1});
+  config_.garbler_inputs.emplace_back(GarblerInputs{
+      GarblerInputsType::GARBLER_INPUTS_SEVEN_SEGMENTS, nb_segments});
+  if (has_watermark) {
+    config_.garbler_inputs.emplace_back(GarblerInputs{
+        GarblerInputsType::GARBLER_INPUTS_WATERMARK, width * height});
+  }
 
   config_.evaluator_inputs.emplace_back(
-      EvaluatorInputsType::EVALUATOR_INPUTS_RND, rndsize);
+      EvaluatorInputs{EvaluatorInputsType::EVALUATOR_INPUTS_RND, rndsize});
 
   config_.display_config.width = width;
   config_.display_config.height = height;
   config_.display_config.segments_type = static_cast<uint32_t>(segments_type);
+
+  has_watermark_ = has_watermark;
 }
 
 template <typename DrawableWhereT>
@@ -99,13 +105,19 @@ std::string Segments2Pixels<DrawableWhereT>::GenerateVerilog() const {
 
   std::string verilog_buf;
 
+  assert(config_.garbler_inputs[0].type ==
+             GarblerInputsType::GARBLER_INPUTS_BUF &&
+         "wrong config order in ::Segments2Pixels?");
   assert(config_.garbler_inputs[1].type ==
              GarblerInputsType::GARBLER_INPUTS_SEVEN_SEGMENTS &&
          "wrong config order in ::Segments2Pixels?");
-  assert(config_.garbler_inputs[2].type ==
-             GarblerInputsType::GARBLER_INPUTS_WATERMARK &&
-         "wrong config order in ::Segments2Pixels?");
-  assert(config_.garbler_inputs[2].length == nb_pixels && "wrong config!");
+  if (has_watermark_) {
+    assert(config_.garbler_inputs[2].type ==
+               GarblerInputsType::GARBLER_INPUTS_WATERMARK &&
+           "wrong config order in ::Segments2Pixels?");
+    assert(config_.garbler_inputs[2].length == nb_pixels && "wrong config!");
+  }
+
   unsigned int nb_inputs = config_.garbler_inputs[1].length;
 
   // without reserve : 1657472 - 1771623 (ns)
@@ -190,6 +202,9 @@ std::string Segments2Pixels<DrawableWhereT>::GetDefines() const {
                             config_.garbler_inputs[1].length);
   verilog_defines.AddDefine("WIDTH", config_.display_config.width);
   verilog_defines.AddDefine("HEIGHT", config_.display_config.height);
+  if (has_watermark_) {
+    verilog_defines.AddDefine("HAS_WATERMARK");
+  }
 
   assert(config_.evaluator_inputs[0].type ==
              EvaluatorInputsType::EVALUATOR_INPUTS_RND &&
