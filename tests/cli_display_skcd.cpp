@@ -25,9 +25,9 @@ ABSL_FLAG(std::string, output_skcd_path, "output.skcd.pb.bin",
 ABSL_FLAG(u_int32_t, width, 1280 / 2, "width");
 ABSL_FLAG(u_int32_t, height, 720 / 2, "height");
 ABSL_FLAG(u_int32_t, nb_digits, 2, "nb_digits");
-ABSL_FLAG(bool, is_message, false, "is_message");
+ABSL_FLAG(bool, is_message, true, "is_message");
 ABSL_FLAG(bool, has_watermark, true, 
-// test withouth watermark/message -> ERROR: Module port `\watmk' is not declared in module header
+// test withouth watermark -> ERROR: Module port `\watmk' is not declared in module header
           "has_watermark: cf HAS_WATERMARK in data/verilog/");
 
 int main(int argc, char** argv) {
