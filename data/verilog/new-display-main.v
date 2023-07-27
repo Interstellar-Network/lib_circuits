@@ -1,15 +1,13 @@
-//`ifdef HAS_WATERMARK
+`ifdef HAS_WATERMARK
 module main ( z , msg , watmk , rnd , pix );
-//`else
-//module main ( z , msg , rnd , pix );
-//`endif
+`else
+module main ( z , msg , rnd , pix );
+`endif
 
 // garbler inputs
 input z;
 input [`BITMAP_NB_SEGMENTS-1:0] msg;
-`ifdef HAS_WATERMARK
 input [`WIDTH*`HEIGHT-1:0] watmk;
-`endif
 
 // evaluator inputs
 input [`RNDSIZE-1:0] rnd;
@@ -29,11 +27,22 @@ wire [`BITMAP_NB_SEGMENTS-1:0] selseg;
 // sys     0m0.047s
 wire [`WIDTH*`HEIGHT-1:0] pixsegments;
 
-xorexpand xe(.r (rnd), .p (rndx));
+// Instantiate LFSR_comb module
+// Available probabilities:
+// - 2'b00: 0.5
+// - 2'b01: 0.7
+// - 2'b10: 0.8
+// - 2'b11: 0.9
+LFSR_comb lc(
+    .seed(rnd),
+    .probability(2'b11), // Choose 0.9 probability
+    .rnd(rndx)
+);
+
 rndswitch rs(.s (msg), .r (rndx), .z (z), .o (selseg));
 segment2pixel sp(.s (selseg), .p (pixsegments));
-//`ifdef HAS_WATERMARK
-  watermark wm(.pixsegments (pixsegments), .pixwatermark (watmk), .pix (pix));
-//`endif
 
+`ifdef HAS_WATERMARK
+  watermark wm(.pixsegments (pixsegments), .pixwatermark (watmk), .pix (pix));
+`endif
 endmodule
