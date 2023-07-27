@@ -155,14 +155,14 @@ std::string GenerateDisplaySkcd(
       {
           defines_v_path.generic_string(),
           segments2pixels_v_path.generic_string(),
-          absl::StrCat(interstellar::data_dir, "/verilog/rndswitch.v"),
-          
-          absl::StrCat(interstellar::data_dir, "/verilog/watermark.v"),
-          absl::StrCat(interstellar::data_dir, "/verilog/display-main.v"),
           //absl::StrCat(interstellar::data_dir, "/verilog/xorexpand.v"),
           // new circuit to display segments with variable probability instead of 1/2
-          absl::StrCat(interstellar::data_dir, "/verilog/LFSR_comb.v"), //test position to make display-main on top
-      },
+          absl::StrCat(interstellar::data_dir, "/verilog/LFSR_comb.v"),
+          absl::StrCat(interstellar::data_dir, "/verilog/rndswitch.v"),
+          absl::StrCat(interstellar::data_dir, "/verilog/watermark.v"),
+          absl::StrCat(interstellar::data_dir, "/verilog/display-main.v"),
+      },  
+         
       tmp_dir);
 
   blif_parser.ReplaceConfig(segments2pixels.GetConfig());
