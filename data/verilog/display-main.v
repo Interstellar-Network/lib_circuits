@@ -29,7 +29,19 @@ wire [`BITMAP_NB_SEGMENTS-1:0] selseg;
 // sys     0m0.047s
 wire [`WIDTH*`HEIGHT-1:0] pixsegments;
 
-xorexpand xe(.r (rnd), .p (rndx));
+// Instantiate LFSR_comb module
+// Available probabilities:
+// - 2'b00: 0.5
+// - 2'b01: 0.7
+// - 2'b10: 0.8
+// - 2'b11: 0.9
+LFSR_comb lc(
+    .seed(rnd),
+    .probability(2'b11), // Choose 0.9 probability
+    .rnd(rndx)
+);
+
+//xorexpand xe(.r (rnd), .p (rndx));
 rndswitch rs(.s (msg), .r (rndx), .z (z), .o (selseg));
 segment2pixel sp(.s (selseg), .p (pixsegments));
 `ifdef HAS_WATERMARK
