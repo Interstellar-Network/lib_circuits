@@ -162,7 +162,7 @@ std::string GenerateDisplaySkcd(
           absl::StrCat(interstellar::data_dir, "/verilog/watermark.v"),
           absl::StrCat(interstellar::data_dir, "/verilog/display-main.v"),
       },  
-         
+        
       tmp_dir);
 
   blif_parser.ReplaceConfig(segments2pixels.GetConfig());

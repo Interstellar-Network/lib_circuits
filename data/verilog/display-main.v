@@ -35,6 +35,7 @@ wire [`WIDTH*`HEIGHT-1:0] pixsegments;
 // - 2'b01: 0.7
 // - 2'b10: 0.8
 // - 2'b11: 0.9
+
 LFSR_comb lc(
     .seed(rnd),
     .probability(2'b11), // Choose 0.9 probability
@@ -49,3 +50,4 @@ segment2pixel sp(.s (selseg), .p (pixsegments));
 `endif
 
 endmodule
+
