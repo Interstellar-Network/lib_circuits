@@ -1,8 +1,8 @@
-`ifdef HAS_WATERMARK
+//`ifdef HAS_WATERMARK
 module main ( z , msg , watmk , rnd , pix );
-`else
-module main ( z , msg , rnd , pix );
-`endif
+//`else
+//module main ( z , msg , rnd , pix );
+//`endif
 
 // garbler inputs
 input z;
@@ -32,8 +32,8 @@ wire [`WIDTH*`HEIGHT-1:0] pixsegments;
 xorexpand xe(.r (rnd), .p (rndx));
 rndswitch rs(.s (msg), .r (rndx), .z (z), .o (selseg));
 segment2pixel sp(.s (selseg), .p (pixsegments));
-`ifdef HAS_WATERMARK
+//`ifdef HAS_WATERMARK
   watermark wm(.pixsegments (pixsegments), .pixwatermark (watmk), .pix (pix));
-`endif
+//`endif
 
 endmodule
