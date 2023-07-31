@@ -78,9 +78,11 @@ Segments2Pixels<DrawableWhereT>::Segments2Pixels(
     config_.garbler_inputs.emplace_back(GarblerInputs{
         GarblerInputsType::GARBLER_INPUTS_WATERMARK, width * height});
   }
-
   config_.evaluator_inputs.emplace_back(
-      EvaluatorInputs{EvaluatorInputsType::EVALUATOR_INPUTS_RND, rndsize});
+      EvaluatorInputs{EvaluatorInputsType::EVALUATOR_INPUTS_RND, (rndsize -1)/2*rndsize-1}); 
+      //test required a larger random evaluator input for 10 digits pinpad
+      // to clean up??
+      printf("EVALUATOR_INPUTS_RND: %d rndsize: %d\n",(rndsize-1)/2*rndsize-1, rndsize);
 
   config_.display_config.width = width;
   config_.display_config.height = height;

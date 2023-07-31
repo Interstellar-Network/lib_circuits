@@ -165,6 +165,7 @@ void CompileVerilog(const std::vector<std::string_view> &inputs_v_full_paths,
   // Yosys::Pass::call(&yosys_design, "synth"); -> this is sort of the commands below:
   // CHECK: the default with "./yosys_exe" > "help synth"
   Yosys::Pass::call(&yosys_design, "hierarchy -check -top main");
+  //Yosys::Pass::call(&yosys_design, "hierarchy -check");
 	Yosys::Pass::call(&yosys_design, "proc");
   Yosys::Pass::call(&yosys_design, "flatten");
   Yosys::Pass::call(&yosys_design, "opt_expr");

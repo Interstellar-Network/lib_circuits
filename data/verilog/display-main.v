@@ -17,6 +17,7 @@ input [`RNDSIZE-1:0] rnd;
 output [`WIDTH*`HEIGHT-1:0] pix;
 
 wire [`RNDSIZE*(`RNDSIZE-1)/2-1:0] rndx;
+
 wire [`BITMAP_NB_SEGMENTS-1:0] selseg;
 // TODO do we need an intermediate? ninja && time ./tests/cli_display_skcd --width=120 --height=52
 // Entered genlib library with 16 gates from file "/home/pratn/Documents/interstellar/api_circuits/lib_circuits_wrapper/deps/lib_circuits/data/verilog/skcd.genlib".
@@ -32,13 +33,14 @@ wire [`WIDTH*`HEIGHT-1:0] pixsegments;
 // Instantiate LFSR_comb module
 // Available probabilities:
 // - 2'b00: 0.5
-// - 2'b01: 0.7
-// - 2'b10: 0.8
-// - 2'b11: 0.9
+// - 2'b01: 0.6
+// - 2'b10: 0.7
+// - 2'b11: 0.8
+// for 0.9 assign manually to a probability input as we use only 2 bits as probability selector
 
 LFSR_comb lc(
     .seed(rnd),
-    .probability(2'b11), // Choose 0.9 probability
+    .probability(2'b10), // Choose 0.7 probability
     .rnd(rndx)
 );
 
