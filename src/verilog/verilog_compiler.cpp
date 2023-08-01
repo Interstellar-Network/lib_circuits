@@ -164,8 +164,9 @@ void CompileVerilog(const std::vector<std::string_view> &inputs_v_full_paths,
 	// https://stackoverflow.com/questions/31434380/what-is-a-good-template-yosys-synthesis-script
   // Yosys::Pass::call(&yosys_design, "synth"); -> this is sort of the commands below:
   // CHECK: the default with "./yosys_exe" > "help synth"
+  
+  Yosys::Pass::call(&yosys_design, "hierarchy -check");
   Yosys::Pass::call(&yosys_design, "hierarchy -check -top main");
-  //Yosys::Pass::call(&yosys_design, "hierarchy -check");
 	Yosys::Pass::call(&yosys_design, "proc");
   Yosys::Pass::call(&yosys_design, "flatten");
   Yosys::Pass::call(&yosys_design, "opt_expr");
@@ -197,7 +198,6 @@ void CompileVerilog(const std::vector<std::string_view> &inputs_v_full_paths,
   Yosys::Pass::call(&yosys_design, "hierarchy -check");
   Yosys::Pass::call(&yosys_design, "stat");
   Yosys::Pass::call(&yosys_design, "check");
-
   //Yosys::Pass::call(&yosys_design, "synth -noabc");
   // Yosys::Pass::call(&yosys_design, "abc");
   // Yosys::Pass::call(&yosys_design, "clean");

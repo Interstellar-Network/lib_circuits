@@ -67,8 +67,9 @@ Segments2Pixels<DrawableWhereT>::Segments2Pixels(
   // Historically(before the support of variable otp_length), message had
   // RNDSIZE=9, and pinpad RNDSIZE=16
   // math.ceil(0.5 * math.sqrt(8 * otp_length * message_seg + 1) + 1)
-  auto rndsize = static_cast<unsigned int>(
-      std::max(std::ceil(0.5 * std::sqrt(8 * nb_segments + 1) + 1), 9.));
+  //auto rndsize = static_cast<unsigned int>(
+  //    std::max(std::ceil(0.5 * std::sqrt(8 * nb_segments + 1) + 1), 9.));
+  auto rndsize_2 = static_cast<unsigned int>(77); // to test 70 segments
 
   config_.garbler_inputs.emplace_back(
       GarblerInputs{GarblerInputsType::GARBLER_INPUTS_BUF, 1});
@@ -79,10 +80,8 @@ Segments2Pixels<DrawableWhereT>::Segments2Pixels(
         GarblerInputsType::GARBLER_INPUTS_WATERMARK, width * height});
   }
   config_.evaluator_inputs.emplace_back(
-      EvaluatorInputs{EvaluatorInputsType::EVALUATOR_INPUTS_RND, (rndsize -1)/2*rndsize-1}); 
-      //test required a larger random evaluator input for 10 digits pinpad
-      // to clean up??
-      printf("EVALUATOR_INPUTS_RND: %d rndsize: %d\n",(rndsize-1)/2*rndsize-1, rndsize);
+      EvaluatorInputs{EvaluatorInputsType::EVALUATOR_INPUTS_RND, rndsize_2}); 
+      //test required 70 segments
 
   config_.display_config.width = width;
   config_.display_config.height = height;
