@@ -1,3 +1,7 @@
+//select 0.8 probability
+`define PROBABILITY 2`b11 
+// to set in the creation of define.v
+
 `ifdef HAS_WATERMARK
 module main ( z , msg , watmk , rnd , pix );
 `else
@@ -40,7 +44,7 @@ wire [`WIDTH*`HEIGHT-1:0] pixsegments;
 
 LFSR_comb lc(
     .seed(rnd),
-    .probability(2'b10), // Choose 0.7 probability
+    .probability(PROBABILIY), // select probability of displaying segments
     .rnd(rndx)
 );
 
