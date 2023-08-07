@@ -1,7 +1,3 @@
-//select 0.8 probability
-`define PROBABILITY 2`b11 
-// to set in the creation of define.v
-
 `ifdef HAS_WATERMARK
 module main ( z , msg , watmk , rnd , pix );
 `else
@@ -20,8 +16,7 @@ input [`RNDSIZE-1:0] rnd;
 
 output [`WIDTH*`HEIGHT-1:0] pix;
 
-wire [`RNDSIZE*(`RNDSIZE-1)/2-1:0] rndx;
-
+wire [`BITMAP_NB_SEGMENTS-1:0] rndx;
 wire [`BITMAP_NB_SEGMENTS-1:0] selseg;
 // TODO do we need an intermediate? ninja && time ./tests/cli_display_skcd --width=120 --height=52
 // Entered genlib library with 16 gates from file "/home/pratn/Documents/interstellar/api_circuits/lib_circuits_wrapper/deps/lib_circuits/data/verilog/skcd.genlib".
@@ -35,21 +30,18 @@ wire [`BITMAP_NB_SEGMENTS-1:0] selseg;
 wire [`WIDTH*`HEIGHT-1:0] pixsegments;
 
 // Instantiate LFSR_comb module
-// Available probabilities:
-// - 2'b00: 0.5
-// - 2'b01: 0.6
-// - 2'b10: 0.7
-// - 2'b11: 0.8
-// for 0.9 assign manually to a probability input as we use only 2 bits as probability selector
+// probability 0.5 -> 2'b00 
+// probability 0.6 -> 2'b01 
+// probability 0.7 -> 2'b10
+// probability 0.9 -> 2'b11
 
 LFSR_comb lc(
     .seed(rnd),
-    .probability(PROBABILIY), // select probability of displaying segments
+    .probability(2'b11), // select probability of displaying segments
     .rnd(rndx)
 );
 
-//xorexpand xe(.r (rnd), .p (rndx));
-rndswitch rs(.s (msg), .r (rndx), .z (z), .o (selseg));
+rndswitch rs(.s (msg), .r (rndx), .z (z),.o (selseg));
 segment2pixel sp(.s (selseg), .p (pixsegments));
 `ifdef HAS_WATERMARK
   watermark wm(.pixsegments (pixsegments), .pixwatermark (watmk), .pix (pix));

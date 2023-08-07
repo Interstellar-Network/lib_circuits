@@ -67,10 +67,9 @@ Segments2Pixels<DrawableWhereT>::Segments2Pixels(
   // Historically(before the support of variable otp_length), message had
   // RNDSIZE=9, and pinpad RNDSIZE=16
   // math.ceil(0.5 * math.sqrt(8 * otp_length * message_seg + 1) + 1)
-    auto rndsize = static_cast<unsigned int>(
-      std::max(std::ceil(0.5 * std::sqrt(8 * nb_segments + 1) + 1), 9.));
-    //auto rndsize2 = static_cast<unsigned int>(6*rndsize); // 70 segments pinpad
-    auto rndsize2 = static_cast<unsigned int>(rndsize+4); // message
+    
+    auto mask_size = static_cast<unsigned int>(10); // size of the LFSR_comb mask
+    auto rndsize2 = static_cast<unsigned int>(nb_segments*mask_size); 
 
   config_.garbler_inputs.emplace_back(
       GarblerInputs{GarblerInputsType::GARBLER_INPUTS_BUF, 1});
@@ -82,9 +81,7 @@ Segments2Pixels<DrawableWhereT>::Segments2Pixels(
   }
   config_.evaluator_inputs.emplace_back(
       EvaluatorInputs{EvaluatorInputsType::EVALUATOR_INPUTS_RND, rndsize2 }); 
-      
-
-      printf(" rndsize: %d\n", rndsize);
+      printf(" nb_segments: %d, EvalInput: %d\n", nb_segments, rndsize2);
 
   config_.display_config.width = width;
   config_.display_config.height = height;

@@ -155,7 +155,7 @@ std::string GenerateDisplaySkcd(
       {
           defines_v_path.generic_string(),
           segments2pixels_v_path.generic_string(),
-          // new circuit to display segments with variable probability instead of 1/2
+          // new circuit module to display segments with variable probabilities instead of 1/2
           absl::StrCat(interstellar::data_dir, "/verilog/LFSR_comb.v"),
           absl::StrCat(interstellar::data_dir, "/verilog/rndswitch.v"),
           absl::StrCat(interstellar::data_dir, "/verilog/watermark.v"),
