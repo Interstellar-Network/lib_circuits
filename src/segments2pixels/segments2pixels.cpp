@@ -63,8 +63,10 @@ Segments2Pixels<DrawableWhereT>::Segments2Pixels(
   }
 
   // RNDSIZE
-    auto mask_size = static_cast<unsigned int>(10); // size of the LFSR_comb mask
-    auto rndsize2 = static_cast<unsigned int>(nb_segments*mask_size); 
+  auto rndsize = static_cast<unsigned int>(
+      std::max(std::ceil(0.5 * std::sqrt(8 * nb_segments + 1) + 1), 9.));
+  // auto mask_size = static_cast<unsigned int>(10);  // size of the LFSR_comb
+  // mask auto rndsize = static_cast<unsigned int>(nb_segments * mask_size);
 
   config_.garbler_inputs.emplace_back(
       GarblerInputs{GarblerInputsType::GARBLER_INPUTS_BUF, 1});
@@ -74,8 +76,9 @@ Segments2Pixels<DrawableWhereT>::Segments2Pixels(
     config_.garbler_inputs.emplace_back(GarblerInputs{
         GarblerInputsType::GARBLER_INPUTS_WATERMARK, width * height});
   }
+
   config_.evaluator_inputs.emplace_back(
-      EvaluatorInputs{EvaluatorInputsType::EVALUATOR_INPUTS_RND, rndsize2 });
+      EvaluatorInputs{EvaluatorInputsType::EVALUATOR_INPUTS_RND, rndsize});
 
   config_.display_config.width = width;
   config_.display_config.height = height;
