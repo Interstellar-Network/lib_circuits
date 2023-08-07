@@ -75,8 +75,7 @@ Segments2Pixels<DrawableWhereT>::Segments2Pixels(
         GarblerInputsType::GARBLER_INPUTS_WATERMARK, width * height});
   }
   config_.evaluator_inputs.emplace_back(
-      EvaluatorInputs{EvaluatorInputsType::EVALUATOR_INPUTS_RND, rndsize2 }); 
-      printf(" nb_segments: %d, EvalInput: %d\n", nb_segments, rndsize2);
+      EvaluatorInputs{EvaluatorInputsType::EVALUATOR_INPUTS_RND, rndsize2 });
 
   config_.display_config.width = width;
   config_.display_config.height = height;
