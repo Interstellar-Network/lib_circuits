@@ -63,11 +63,6 @@ Segments2Pixels<DrawableWhereT>::Segments2Pixels(
   }
 
   // RNDSIZE
-  // TODO Check
-  // Historically(before the support of variable otp_length), message had
-  // RNDSIZE=9, and pinpad RNDSIZE=16
-  // math.ceil(0.5 * math.sqrt(8 * otp_length * message_seg + 1) + 1)
-    
     auto mask_size = static_cast<unsigned int>(10); // size of the LFSR_comb mask
     auto rndsize2 = static_cast<unsigned int>(nb_segments*mask_size); 
 
