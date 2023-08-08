@@ -1,6 +1,6 @@
 module rndswitch ( s , r , z , o );
 input [`BITMAP_NB_SEGMENTS-1:0] s;
-input [`RNDSIZE*(`RNDSIZE-1)/2-1:0] r;
+input [`RNDSIZE-1:0] r;
 input z;
 output [`BITMAP_NB_SEGMENTS-1:0] o;
 wire [`BITMAP_NB_SEGMENTS-1:0] t;

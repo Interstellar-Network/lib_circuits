@@ -1,3 +1,4 @@
+
 module xorexpand ( r , p );
 input [`RNDSIZE-1:0] r;
 output [`RNDSIZE*(`RNDSIZE-1)/2-1:0] p;

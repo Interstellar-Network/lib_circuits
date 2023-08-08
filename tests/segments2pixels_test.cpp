@@ -59,7 +59,7 @@ TEST(Segments2PixelsTest, BasicDisplayOk) {
   ASSERT_THAT(res_defines_lines, testing::UnorderedElementsAreArray({
                                      "`define WIDTH 120",
                                      "`define BITMAP_NB_SEGMENTS 14",
-                                     "`define RNDSIZE 9",
+                                     "`define RNDSIZE 140",
                                      "`define HEIGHT 52",
                                      "`define HAS_WATERMARK",
                                  }));

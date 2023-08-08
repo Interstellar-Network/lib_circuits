@@ -26,7 +26,7 @@ ABSL_FLAG(u_int32_t, width, 1280 / 2, "width");
 ABSL_FLAG(u_int32_t, height, 720 / 2, "height");
 ABSL_FLAG(u_int32_t, nb_digits, 2, "nb_digits");
 ABSL_FLAG(bool, is_message, true, "is_message");
-ABSL_FLAG(bool, has_watermark, true,
+ABSL_FLAG(bool, has_watermark, true, 
           "has_watermark: cf HAS_WATERMARK in data/verilog/");
 
 int main(int argc, char** argv) {
