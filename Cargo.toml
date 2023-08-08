@@ -1,0 +1,20 @@
+[workspace]
+members = ["circuit-types-rs", "circuit-gen-rs"]
+resolver = "2"
+
+# https://docs.rust-embedded.org/embedonomicon/smallest-no-std.html#eh_personality
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+
+# [patch."https://github.com/Interstellar-Network/rs-common.git"]
+# png-utils = { path = "../rs-common/png_utils" }
+
+# custom profile use for profiling:
+# - release optimisations
+# - BUT with debug to have nice stacktrace and profiling data
+[profile.release-with-debug]
+inherits = "release"
+debug = true

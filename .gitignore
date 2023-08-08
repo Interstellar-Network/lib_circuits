@@ -9,6 +9,10 @@
 /dist*
 /dist/*
 
+# Rust
+/target/
+Cargo.lock
+
 /__pycache__/
 
 # vscode
@@ -25,3 +29,5 @@ GRTAGS
 
 # sanitizerz blacklists
 /*.supp
+
+/*.png
