@@ -1,5 +1,6 @@
 //Linear Feedback Shift Register (combinational)
-// to generate probabilties of displaying digits segments
+// used as a random generator 
+// to generate the selected probabilty of displaying the digits segments
 
 module LFSR_comb #(
     parameter BITSIZE = 10,
@@ -10,7 +11,7 @@ module LFSR_comb #(
     input [COUNTERSIZE-1:0] count,
     output [`BITMAP_NB_SEGMENTS-1:0] rnd
 );
-    //Desired probability match the threshold value to test number of bits sets to 1 in bitslice
+    //Desired probability match the threshold value to test the number of bits sets to 1 in bitslice
     // probability 0.5  = 4'b0101;  // 0.5 if mask applied slightly < 0.4 either
     // probability 0.6  = 4'b0100;  // 0.6
     // probability 0.7  = 4'b0100;  // 0.7 if mask applied
@@ -32,14 +33,14 @@ module LFSR_comb #(
     localparam MASK_05  = 10'b0000000001; // to apply for 0.5
     //TO DO refine probabilities by increasing threshold and set more bits to 1 with masks.
 
-    // ensure declaration of this wires otherwise i.e slected_threshold assigment works but with the wrong value
+    // Ensure the declarations of this wires otherwise i.e slected_threshold assigment works but with the wrong value
     // cf: Yosys "Warning: Identifier \selected_threshold' is implicitly declared"
     wire [COUNTERSIZE-1:0] selected_threshold;  
     wire [COUNTERSIZE-1:0] selected_mask;
-    // Determine the threshold based on the input probability value = threshold
+    // Determine the threshold based i.e input probability value = threshold
     assign selected_threshold = probability;
 
-    // Define the mask based on the probability i.e threshold value
+    // Define the mask used to fine-tune probability
     assign selected_mask =  (selected_threshold == 4'b0000) ? MASK_10  :
                             (selected_threshold == 4'b0001) ? MASK_09P :
                             (selected_threshold == 4'b0010) ? MASK_09  : 
@@ -83,7 +84,6 @@ endmodule
 // count = 4'b0101 expected
 
 // BitCounter combinational
-
 module BitCounter #(
     parameter BITSIZE = 10,
     parameter COUNTERSIZE = 4

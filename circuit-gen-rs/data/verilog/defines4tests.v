@@ -1,0 +1,4 @@
+`define WIDTH 640
+`define BITMAP_NB_SEGMENTS 70
+`define HEIGHT 360
+`define RNDSIZE 700

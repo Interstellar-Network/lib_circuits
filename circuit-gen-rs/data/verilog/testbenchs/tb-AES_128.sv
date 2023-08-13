@@ -40,6 +40,9 @@ module my_aes128_coprocessor_tb;
 
     $display("Ciphertext: %h", ctext_aes_actual);
 
+     // To use EPWave
+    $dumpfile("dump.vcd"); $dumpvars;
+
     // End the simulation
     $finish;
   end
