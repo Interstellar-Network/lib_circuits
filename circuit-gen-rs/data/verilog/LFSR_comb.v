@@ -11,14 +11,14 @@ module LFSR_comb #(
     input [COUNTERSIZE-1:0] count,
     output [`BITMAP_NB_SEGMENTS-1:0] rnd
 );
-    //Desired probability match the threshold value to test the number of bits sets to 1 in bitslice
-    // probability 0.5  = 4'b0101;  // 0.5 if mask applied slightly < 0.4 either
-    // probability 0.6  = 4'b0100;  // 0.6
+    //Desired probability matchs the threshold value to test the number of bits sets to 1 in bitslice
+    // probability 0.5  = 4'b0110;  // 0.5 if mask applied slightly < 0.4 either
+    // probability 0.6  = 4'b0101;  // 0.6 if mask applied
     // probability 0.7  = 4'b0100;  // 0.7 if mask applied
     // probability 0.8  = 4'b0011;  // 0.8
     // probability 0.9  = 4'b0010;  // 0.9
     // probability +0.9 = 4'b0001;  // 0.98
-    // probability 1    = 4'b0000;  // 1 all bits set
+    // probability 1    = 4'b0000;  // 1 all segment ON
     // Decimal number of bits set to 1 in bitslice
     // 0: 4'b0000 1: 4'b0001 2: 4'b0010 3: 4'b0011 4: 4'b0100 5: 4'b0101
     // 6: 4'b0110 7: 4'b0111 8: 4'b1000 9: 4'b1001 10: 4'b1010
@@ -29,8 +29,8 @@ module LFSR_comb #(
     localparam MASK_09  = 10'b0000000000; 
     localparam MASK_08  = 10'b0000000000;
     localparam MASK_07  = 10'b0000000001; // to apply for 0,7
-    localparam MASK_06  = 10'b0000000000;  
-    localparam MASK_05  = 10'b0000000001; // to apply for 0.5
+    localparam MASK_06  = 10'b0000000011;  
+    localparam MASK_05  = 10'b0000000011; // to apply for 0.5
     //TO DO refine probabilities by increasing threshold and set more bits to 1 with masks.
 
     // Ensure the declarations of this wires otherwise i.e slected_threshold assigment works but with the wrong value
@@ -46,11 +46,11 @@ module LFSR_comb #(
                             (selected_threshold == 4'b0010) ? MASK_09  : 
                             (selected_threshold == 4'b0011) ? MASK_08  :                          
                             (selected_threshold == 4'b0100) ? MASK_07  :
-                            (selected_threshold == 4'b0011) ? MASK_06  :
-                            (selected_threshold == 4'b0101) ? MASK_05  :
+                            (selected_threshold == 4'b0101) ? MASK_06  :
+                            (selected_threshold == 4'b0110) ? MASK_05  :
                                                               MASK_09;
     
-    wire feedback = seed[`RNDSIZE-1] ^ seed[3] ^ seed[2] ^ seed[0];// polynomial of LFSR X^3+X^2+X
+    wire feedback = seed[`RNDSIZE-1] ^ seed[3] ^ seed[2] ^ seed[0];// Polynomial of LFSR X^3+X^2+X
     wire [`RNDSIZE-1:0] lfsr_output = {seed[`RNDSIZE-2:0], feedback};
 
     wire [BITSIZE-1:0] temp_lfsr_ouput;

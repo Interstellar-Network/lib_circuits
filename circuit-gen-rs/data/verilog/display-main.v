@@ -34,8 +34,8 @@ wire [`WIDTH*`HEIGHT-1:0] pixsegments;
 
 // Instantiate LFSR_comb module
 // Desired probability of displaying segments ON/OFF
-// probability 0.5  = 4'b0101 approx 1/2
-// probability 0.6  = 4'b0100
+// probability 0.5  = 4'b0110 approx 1/2
+// probability 0.6  = 4'b0101
 // probability 0.7  = 4'b0100
 // probability 0.8  = 4'b0011
 // probability 0.9  = 4'b0010
@@ -44,7 +44,7 @@ wire [`WIDTH*`HEIGHT-1:0] pixsegments;
 
 LFSR_comb lc(
     .seed(rnd),
-    .probability(4'b0100), // select probability of displaying segments
+    .probability(4'b0101), // select probability of displaying segments
     .rnd(rndx),
     .count(count)
 );
