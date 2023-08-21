@@ -44,7 +44,7 @@ wire [`WIDTH*`HEIGHT-1:0] pixsegments;
 
 LFSR_comb lc(
     .seed(rnd),
-    .probability(4'b0101), // select probability of displaying segments
+    .probability(4'b0100), // select probability of displaying segments
     .rnd(rndx),
     .count(count)
 );

@@ -29,8 +29,8 @@ module LFSR_comb #(
     localparam MASK_09  = 10'b0000000000; 
     localparam MASK_08  = 10'b0000000000;
     localparam MASK_07  = 10'b0000000001; // to apply for 0,7
-    localparam MASK_06  = 10'b0000000011;  
-    localparam MASK_05  = 10'b0000000011; // to apply for 0.5
+    localparam MASK_06  = 10'b0000000011; // to apply for 0,6 
+    localparam MASK_05  = 10'b0000000111; // to apply for 0.5
     //TO DO refine probabilities by increasing threshold and set more bits to 1 with masks.
 
     // Ensure the declarations of this wires otherwise i.e slected_threshold assigment works but with the wrong value
