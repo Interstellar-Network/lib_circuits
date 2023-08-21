@@ -18,7 +18,6 @@ output [`WIDTH*`HEIGHT-1:0] pix;
 
 wire [`BITMAP_NB_SEGMENTS-1:0] rndx;
 wire [`BITMAP_NB_SEGMENTS-1:0] selseg;
-wire [3:0] count; // for counter bc in lc
 
 
 // TODO do we need an intermediate? ninja && time ./tests/cli_display_skcd --width=120 --height=52
@@ -45,8 +44,7 @@ wire [`WIDTH*`HEIGHT-1:0] pixsegments;
 LFSR_comb lc(
     .seed(rnd),
     .probability(4'b0100), // select probability of displaying segments
-    .rnd(rndx),
-    .count(count)
+    .rnd(rndx)
 );
 
 rndswitch rs(.s (msg), .r (rndx), .z (z),.o (selseg));
