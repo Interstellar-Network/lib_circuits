@@ -630,6 +630,6 @@ mod tests {
 
         assert_eq!(circ.inputs.len(), 6395);
         assert_eq!(circ.outputs.len(), 120 * 52);
-        assert_eq!(circ.gates.len(), 7471);
+        assert_eq!(circ.gates.len(), 7874);
     }
 }

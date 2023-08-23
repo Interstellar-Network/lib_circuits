@@ -182,8 +182,8 @@ mod tests {
         assert_eq!(config_helper.width, width);
         assert_eq!(config_helper.height, height);
         assert_eq!(config_helper.has_watermark, true);
-        assert_ne!(config_helper.nb_segments, 0);
-        assert_ne!(config_helper.rndsize, 0);
+        assert_eq!(config_helper.nb_segments, 14);
+        assert_eq!(config_helper.rndsize, 14 * 10);
     }
 
     #[test]
