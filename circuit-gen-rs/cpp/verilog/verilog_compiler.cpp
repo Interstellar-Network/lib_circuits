@@ -151,6 +151,8 @@ void CompileVerilog(const std::vector<std::string_view> &inputs_v_full_paths,
   // "Yosys::Pass::call" after a failure will throw an exception
   Yosys::log_streams.clear();
   Yosys::log_streams.push_back(&my_ostream_filtered);
+  // DEBUG: log everything! TOREMOVE, DO NOT COMMIT/PUSH
+  // Yosys::log_streams.push_back(&std::cout);
   Yosys::log_error_stderr = true;
 
   Yosys::RTLIL::Design yosys_design;
@@ -161,7 +163,7 @@ void CompileVerilog(const std::vector<std::string_view> &inputs_v_full_paths,
   // TODO use Yosys::run_pass(read_verilog_cmd) everywhere?
   Yosys::Pass::call(
       &yosys_design,
-      absl::StrCat("read_verilog ", absl::StrJoin(inputs_v_full_paths, " ")));
+      absl::StrCat("read_verilog ", absl::StrJoin(inputs_v_full_paths, " "))); //add -sv for system verilog backward-compatible 
 
   // TODO?
   // https://stackoverflow.com/questions/31434380/what-is-a-good-template-yosys-synthesis-script

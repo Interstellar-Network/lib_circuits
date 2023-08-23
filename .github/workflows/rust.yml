@@ -68,6 +68,14 @@ jobs:
         with:
           test_args: "--features=eval_plain"
 
+      # WARNING: "test_generic_lfsr_comb_all_probas" is slow, and apparently running it in
+      # parallel with other tests makes them fail; probably b/c there are locks on Yosys and ABC calls,
+      # but NOT on the library globally
+      # -> so for now just run the ignored test separately
+      - uses: Interstellar-Network/gh-actions/rust-build-and-test@v3-dev
+        with:
+          test_args: "--features=eval_plain -- --ignored"
+
       ##########################################################################
 
       # TODO move into separate action? ideally into a JS action "post" that setup ccache?
