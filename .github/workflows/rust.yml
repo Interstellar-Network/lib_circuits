@@ -75,6 +75,9 @@ jobs:
       - uses: Interstellar-Network/gh-actions/rust-build-and-test@v3-dev
         with:
           test_args: "--features=eval_plain -- --ignored"
+          # default: 60s * 5 = 5 minutes = 300 s
+          # but these take around 5 min so we x2 the margin
+          test_timeout_seconds: 600
 
       ##########################################################################
 
