@@ -39,7 +39,7 @@ wire [`WIDTH*`HEIGHT-1:0] pixsegments;
 // probability 0.7  = 4'b0100
 // probability 0.8  = 4'b0011
 // probability 0.9  = 4'b0010
-// probability +0.9 = 4'b0001 approx. 0.98
+// probability +0.9 = 4'b0001 approx. 0.99
 // probability 1    = 4'b0000 all segments ON
 
 LFSR_comb lc(
