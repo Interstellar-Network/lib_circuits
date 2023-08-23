@@ -127,6 +127,7 @@ fn generic_lfsr_comb(nb_segments: usize, proba_verilog: &str) -> Vec<u8> {
 /// NOTE; this one is quite slow! eg "finished in 145.52s" on local machine
 #[cfg(feature = "eval_plain")]
 #[test]
+#[ignore = "slow!"]
 fn test_generic_lfsr_comb_all_probas() {
     const nb_segments: usize = 1000; // pick anything big enough to have good probabilities (Law of large numbers)
 
