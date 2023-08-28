@@ -33,8 +33,6 @@ use alloc::string::ToString;
 #[cfg(feature = "alloc")]
 use alloc::vec::Vec;
 
-use circuit_types_rs::Circuit;
-
 // re-export for ease-of-use in pallets
 pub use circuit_types_rs::*;
 
