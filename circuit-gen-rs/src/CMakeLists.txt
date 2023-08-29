@@ -1,8 +1,14 @@
 # ###############################################################################
 
-# TODO fix
+# IMPORTANT: this file is generated/symlinked by `cxx` crate's `build.rs`
+# so it ONLY exists when compiling using cargo, not when using cmake directly!
+# For reference:
+# - eg CMAKE_CURRENT_BINARY_DIR = ./target/debug/build/circuit-gen-rs-dc4a41e11f701140/out/build/src
+# - cxx.h PATH                  = ./target/debug/build/circuit-gen-rs-dc4a41e11f701140/out/cxxbridge/include/rust/cxx.h
+set(MY_RUST_CXX_DIR "${CMAKE_CURRENT_BINARY_DIR}/../../cxxbridge/include/")
+message(INFO " CMAKE_CURRENT_BINARY_DIR: ${CMAKE_CURRENT_BINARY_DIR}, MY_RUST_CXX_DIR: ${MY_RUST_CXX_DIR}")
 find_path(RUST_CXX_INCLUDE_DIR rust/cxx.h
-    PATHS "${PROJECT_SOURCE_DIR}/../target/cxxbridge/"
+    PATHS "${MY_RUST_CXX_DIR}"
     REQUIRED
 )
 
