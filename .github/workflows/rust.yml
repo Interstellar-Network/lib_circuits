@@ -6,6 +6,19 @@ on:
 jobs:
   cpp:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # cf https://stackoverflow.com/questions/66025220/paired-values-in-github-actions-matrix
+        # list of pairs
+        cmake_configs: [
+            { cmake_args: "" },
+            # TODO cf comments in circuit-gen-rs/src/CMakeLists.txt why this is not possible...
+            # Using eg "mkdir -p cxxbridge/include/rust" + "wget https://raw.githubusercontent.com/dtolnay/cxx/master/include/cxx.h -O cxxbridge/include/rust/cxx.h"
+            # is a starting point, but we still need to call cargo to generate "#include "circuit-gen-rs/src/lib.rs.h"
+            # {
+            #   cmake_args: "-Dinterstellar_lib_circuits_BUILD_TESTS=OFF -Dinterstellar_lib_circuits_BUILD_RUST_WRAPPER=ON",
+            # },
+          ]
     steps:
       # install build dependencies
       # MUST match the same step in Dockerfile
@@ -31,6 +44,7 @@ jobs:
       - uses: Interstellar-Network/gh-actions/cmake-build-and-test@v3-dev
         with:
           working-directory: "${{ github.workspace }}/circuit-gen-rs/"
+          cmake_args: ${{ matrix.cmake_configs.cmake_args }}
 
   ##############################################################################
   ##############################################################################
