@@ -52,7 +52,7 @@ impl Metadata {
             max_gate_id: usize::MIN,
         };
 
-        for gate in &circuit.gates {
+        for gate in circuit.gates.iter().flatten() {
             let output_wire_ref = &gate.output;
 
             // if gate is a circuit output wire then update the min/max indices
@@ -140,5 +140,52 @@ impl Metadata {
     #[must_use]
     pub fn get_max_gate_id(&self) -> usize {
         self.max_gate_id
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::blif_parser::parse_blif;
+
+    /// Not ideal: we need a proper full Blif == CircuitInternal
+    /// b/c testing on a basic full adder is not nearly enough
+    #[test]
+    fn test_metadata() {
+        // cf "test_parse_blif_display_message_120x52_2digits"
+        let data = include_str!(
+            "../../circuit-gen-rs/tests/data/result_display_message_120x52_2digits.blif.blif"
+        );
+        let blif = parse_blif(data);
+        assert!(blif.is_ok());
+        let (_, raw_blif) = blif.unwrap();
+        // Convert `Blif` -> `Circuit`
+        let circuit: CircuitInternal = raw_blif.try_into().unwrap();
+
+        let metadata = Metadata::new(&circuit);
+
+        assert_eq!(metadata.outputs_start_end_indexes, (6395, 12634));
+        assert_eq!(
+            metadata.gates_unary_count,
+            [(KindUnary::INV, 1116), (KindUnary::BUF, 5137)]
+                .iter()
+                .cloned()
+                .collect()
+        );
+        assert_eq!(
+            metadata.gates_binary_count,
+            [
+                (KindBinary::NOR, 28),
+                (KindBinary::OR, 14),
+                (KindBinary::NAND, 1396),
+                (KindBinary::XOR, 182)
+            ]
+            .iter()
+            .cloned()
+            .collect()
+        );
+        assert_eq!(metadata.gates_0_count, 1);
+        assert_eq!(metadata.gates_1_count, 0);
+        assert_eq!(metadata.max_gate_id, 14268);
     }
 }
