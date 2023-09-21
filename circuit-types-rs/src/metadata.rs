@@ -141,6 +141,22 @@ impl Metadata {
     pub fn get_max_gate_id(&self) -> usize {
         self.max_gate_id
     }
+
+    ///
+    /// Used by repo [lib-garble-rs], not internally here!
+    ///
+    #[must_use]
+    pub fn get_outputs_range(&self) -> core::ops::Range<usize> {
+        self.outputs_start_end_indexes.0..self.outputs_start_end_indexes.1 + 1
+    }
+
+    ///
+    /// Used by repo [lib-garble-rs], not internally here!
+    ///
+    #[must_use]
+    pub fn get_outputs_start_index(&self) -> usize {
+        self.outputs_start_end_indexes.0
+    }
 }
 
 #[cfg(test)]
