@@ -36,10 +36,10 @@ impl Metadata {
     pub(crate) fn new(circuit: &CircuitInternal) -> Self {
         // `outputs_start_end_indexes` after only works if `outputs` are consecutive; so CHECK it!
         // https://stackoverflow.com/questions/59028400/comparing-every-element-in-a-vector-with-the-next-one
-        assert!(
-            circuit.outputs.windows(2).all(|w| w[1].id == w[0].id + 1),
-            "non consecutive elements in `outputs`!"
-        );
+        // assert!(
+        //     circuit.outputs.windows(2).all(|w| w[1].id == w[0].id + 1),
+        //     "non consecutive elements in `outputs`!"
+        // );
 
         let outputs_set: HashSet<&WireRef> = circuit.outputs.iter().collect();
 

@@ -272,6 +272,87 @@ impl TryFrom<Blif> for CircuitInternal {
         // This is for the "layers" conversion, see at the end
         let mut map_gate_id_to_layer = HashMap::new();
         for skcd_input in &circuit_blif.inputs {
+            map_gate_id_to_layer.insert(skcd_input.id.clone(), 0);
+        }
+
+        // First loop on gates: we set only the output
+        // That way we guarantee outputs are in order; we means we can directly write the outputs
+        // of the eval (cf "main gate loop" in evaluate.rs in lib_garble_rs) without going through an intermediate Vec
+        // TODO to allow parallisation: it SHOULD be loop on each gates layer; for this we need consecutive output INSIDE a layer, NOT globally
+        // for skcd_gate in &circuit_blif.gates {
+        //     // But `output` MUST always be set; this is what we use as Gate ID
+        //     skcd_to_wire_ref_converter.insert(&skcd_gate.o.id);
+        // }
+
+        // First loop on gates: compute the layers
+        // That way we guarantee outputs are in order; we means we can directly write the outputs
+        // of the eval (cf "main gate loop" in evaluate.rs in lib_garble_rs) without going through an intermediate Vec
+        //
+        // Also transform Vec<Gates> -> Vec<Vec<Gates>>
+        // cf `CircuitInternal` docstring
+        //
+        // A Gate's layer is the max(inputA's layer, inputB's layer)
+        // WARNING The gates  ARE NOT guaranteed to be in topological order
+        //
+        // cf /circuit-gen-rs/tests/data/result_abc_full_adder_layers.blif.blif
+        let mut gates_ids_layers = vec![];
+        // for the next "gate loop" we need to go from `gates_ids_layers::Key` -> BlifGate
+        let mut map_gate_id_to_blif_gate: HashMap<String, &BlifGate> = HashMap::new();
+        // TODO to allow parallisation: it SHOULD be loop on each gates layer; for this we need consecutive output INSIDE alayer, NOT globally
+        for skcd_gate in &circuit_blif.gates {
+            map_gate_id_to_blif_gate.insert(skcd_gate.o.id.clone(), skcd_gate);
+
+            let a_layer = if let Some(a) = &skcd_gate.a {
+                map_gate_id_to_layer
+                    .get(&a.id)
+                    .ok_or(CircuitParserError::InvalidGateId {
+                        gate_id: a.id.clone(),
+                    })?
+            } else {
+                &0
+            };
+
+            let b_layer = if let Some(b) = &skcd_gate.b {
+                map_gate_id_to_layer
+                    .get(&b.id)
+                    .ok_or(CircuitParserError::InvalidGateId {
+                        gate_id: b.id.clone(),
+                    })?
+            } else {
+                &0
+            };
+
+            // cf circuit-gen-rs/tests/data/result_abc_full_adder_layers.blif.blif for details
+            // eg:
+            // - if any/all gate inputs are circuit inputs -> current gate's layer is 0
+            // - if at least one input is eg layer N (means it is the output of another gate) -> current gate's layer is 0
+            // NOTE: but in `map_gate_id_to_layer` we insert the Gate's output so "+ 1"
+            let o_layer = (a_layer + 1).max(b_layer + 1);
+            map_gate_id_to_layer.insert(skcd_gate.o.id.clone(), o_layer);
+
+            // Here we use the fact that the gates are guaranteed to be in topological order
+            // so we can avoid iterating on the gates later and directly insert where it needs to be now
+            //
+            // We used "+ 1" b/c it is "output's layer" and we want "current gate layer" so compensate here
+            let current_gate_layer = o_layer - 1;
+            if gates_ids_layers.get(current_gate_layer).is_none() {
+                gates_ids_layers.push(vec![]);
+            }
+            gates_ids_layers[current_gate_layer].push(skcd_gate.o.id.clone());
+        }
+
+        // CRITICAL me MUST do it BEFORE the inputs!
+        for (layer_idx, layer_gate_ids) in gates_ids_layers.iter().enumerate() {
+            for (layer_gate_idx, gate_id) in layer_gate_ids.iter().enumerate() {
+                let skcd_gate: &&BlifGate = map_gate_id_to_blif_gate.get(gate_id).unwrap();
+
+                // But `output` MUST always be set; this is what we use as Gate ID
+                skcd_to_wire_ref_converter.insert(&skcd_gate.o.id);
+            }
+        }
+
+        // Also CRITICAL we MUST do it before the main loop; but AFTER the outputs
+        for skcd_input in &circuit_blif.inputs {
             skcd_to_wire_ref_converter.insert(&skcd_input.id);
             let gate_id = skcd_to_wire_ref_converter
                 .get(&skcd_input.id)
@@ -279,7 +360,69 @@ impl TryFrom<Blif> for CircuitInternal {
                     gate_id: skcd_input.id.to_string(),
                 })?;
             inputs.push(gate_id.clone());
-            map_gate_id_to_layer.insert(gate_id.clone(), 0);
+        }
+
+        // Convert each "Blif gate" into a proper `Gate`
+        // The main idea here is to convert "Blif IDs"(== strings) into "proper IDs"(== usize)
+        // The critical part is to understand that both "a" and "b" inputs are optional(zero, one or both can be set : Zero/One gates, Nor gates, etc)
+        //
+        let mut gates_layers: Vec<Vec<Gate>> = vec![];
+        for (layer_idx, layer_gate_ids) in gates_ids_layers.iter().enumerate() {
+            for (layer_gate_idx, gate_id) in layer_gate_ids.iter().enumerate() {
+                let skcd_gate: &&BlifGate = map_gate_id_to_blif_gate.get(gate_id).unwrap();
+
+                let output_wire_ref =
+                    skcd_to_wire_ref_converter
+                        .get(&skcd_gate.o.id)
+                        .ok_or_else(|| CircuitParserError::OutputInvalidGateId {
+                            gate_id: skcd_gate.o.id.clone(),
+                        })?;
+
+                // **IMPORTANT** NOT ALL Gate to be built require x_ref and y_ref
+                // so DO NOT unwrap here!
+                // That would break the circuit building process!
+                let new_gate = match (&skcd_gate.a, &skcd_gate.b) {
+                    (None, None) => Gate::new_from_skcd_gate_type(
+                        &skcd_gate.gate_type,
+                        output_wire_ref,
+                        None,
+                        None,
+                    )?,
+                    (None, Some(b)) => {
+                        let y_ref = skcd_to_wire_ref_converter.get(&b.id).unwrap();
+                        Gate::new_from_skcd_gate_type(
+                            &skcd_gate.gate_type,
+                            output_wire_ref,
+                            None,
+                            Some(y_ref),
+                        )?
+                    }
+                    (Some(a), None) => {
+                        let x_ref = skcd_to_wire_ref_converter.get(&a.id).unwrap();
+                        Gate::new_from_skcd_gate_type(
+                            &skcd_gate.gate_type,
+                            output_wire_ref,
+                            Some(x_ref),
+                            None,
+                        )?
+                    }
+                    (Some(a), Some(b)) => {
+                        let x_ref = skcd_to_wire_ref_converter.get(&a.id).unwrap();
+                        let y_ref = skcd_to_wire_ref_converter.get(&b.id).unwrap();
+                        Gate::new_from_skcd_gate_type(
+                            &skcd_gate.gate_type,
+                            output_wire_ref,
+                            Some(x_ref),
+                            Some(y_ref),
+                        )?
+                    }
+                };
+
+                if gates_layers.get(layer_idx).is_none() {
+                    gates_layers.push(vec![]);
+                }
+                gates_layers[layer_idx].push(new_gate);
+            }
         }
 
         // IMPORTANT: we MUST use skcd.o to set the CORRECT outputs
@@ -301,84 +444,13 @@ impl TryFrom<Blif> for CircuitInternal {
             outputs.push(output_wire_ref);
         }
 
-        // Convert each "Blif gate" into a proper `Gate`
-        // The main idea here is to convert "Blif IDs"(== strings) into "proper IDs"(== usize)
-        // The critical part is to understand that both "a" and "b" inputs are optional(zero, one or both can be set : Zero/One gates, Nor gates, etc)
-        //
-        // Also transform Vec<Gates> -> Vec<Vec<Gates>>
-        // cf `CircuitInternal` docstring
-        //
-        // A Gate's layer is the max(inputA's layer, inputB's layer)
-        // WARNING The gates  ARE NOT guaranteed to be in topological order
-        // cf /circuit-gen-rs/tests/data/result_abc_full_adder_layers.blif.blif
-        let mut gates_layers = vec![];
-        for skcd_gate in &circuit_blif.gates {
-            // But `output` MUST always be set; this is what we use as Gate ID
-            skcd_to_wire_ref_converter.insert(&skcd_gate.o.id);
-
-            // **IMPORTANT** NOT ALL Gate to be built require x_ref and y_ref
-            // so DO NOT unwrap here!
-            // That would break the circuit building process!
-            let mut a_layer = 0;
-            let mut b_layer = 0;
-            let x_ref = if let Some(a) = &skcd_gate.a {
-                let a_id = skcd_to_wire_ref_converter.get(&a.id);
-                if let Some(a_id) = a_id {
-                    a_layer = *map_gate_id_to_layer.get(a_id).ok_or(
-                        CircuitParserError::InvalidGateId {
-                            gate_id: a.id.clone(),
-                        },
-                    )?;
-                }
-                a_id
-            } else {
-                None
-            };
-            let y_ref = if let Some(b) = &skcd_gate.b {
-                let b_id = skcd_to_wire_ref_converter.get(&b.id);
-                if let Some(b_id) = b_id {
-                    b_layer = *map_gate_id_to_layer.get(b_id).ok_or(
-                        CircuitParserError::InvalidGateId {
-                            gate_id: b.id.clone(),
-                        },
-                    )?;
-                }
-                b_id
-            } else {
-                None
-            };
-
-            let output_wire_ref =
-                skcd_to_wire_ref_converter
-                    .get(&skcd_gate.o.id)
-                    .ok_or_else(|| CircuitParserError::OutputInvalidGateId {
-                        gate_id: skcd_gate.o.id.clone(),
-                    })?;
-            // eg:
-            // - if any/all gate inputs are circuit inputs -> current gate's layer is 0
-            // - if at least one input is eg layer N (means it is the output of another gate) -> current gate's layer is 0
-            // NOTE: but in `map_gate_id_to_layer` we insert the Gate's output so "+ 1"
-            let o_layer = (a_layer + 1).max(b_layer + 1);
-            map_gate_id_to_layer.insert(output_wire_ref.clone(), o_layer);
-
-            let new_gate =
-                Gate::new_from_skcd_gate_type(&skcd_gate.gate_type, output_wire_ref, x_ref, y_ref)?;
-
-            // Here we use the fact that the gates are guaranteed to be in topological order
-            // so we can avoid iterating on the gates later and directly insert where it needs to be now
-            //
-            // We used "+ 1" b/c it is "output's layer" and we want "current gate layer" so compensate here
-            let current_gate_layer = o_layer - 1;
-            if gates_layers.get(current_gate_layer).is_none() {
-                gates_layers.push(vec![]);
-            }
-            gates_layers[current_gate_layer].push(new_gate);
-        }
-
         assert_eq!(
             circuit_blif.gates.len(),
             gates_layers.iter().map(alloc::vec::Vec::len).sum()
         );
+
+        // CHECK: Gate IDs(== Gate OUTPUT ID) SHOULD match Gate INDEXES
+        // CHECK:
 
         Ok(CircuitInternal {
             inputs,
@@ -708,19 +780,19 @@ mod tests {
                     Gate {
                         internal: Binary {
                             gate_type: XOR,
-                            input_a: WireRef { id: 1 },
-                            input_b: WireRef { id: 0 }
+                            input_a: WireRef { id: 6 },
+                            input_b: WireRef { id: 5 }
                         },
-                        output: WireRef { id: 5 }
+                        output: WireRef { id: 0 }
                     },
                     // O=new_n8_
                     Gate {
                         internal: Binary {
                             gate_type: NAND,
-                            input_a: WireRef { id: 1 },
-                            input_b: WireRef { id: 0 }
+                            input_a: WireRef { id: 6 },
+                            input_b: WireRef { id: 5 }
                         },
-                        output: WireRef { id: 6 }
+                        output: WireRef { id: 1 }
                     }
                 ],
                 vec![
@@ -728,31 +800,49 @@ mod tests {
                     Gate {
                         internal: Binary {
                             gate_type: XOR,
-                            input_a: WireRef { id: 5 },
-                            input_b: WireRef { id: 2 }
+                            input_a: WireRef { id: 0 },
+                            input_b: WireRef { id: 7 }
                         },
-                        output: WireRef { id: 3 }
+                        output: WireRef { id: 2 }
                     },
                     // O=new_n9_
                     Gate {
                         internal: Binary {
                             gate_type: NAND,
-                            input_a: WireRef { id: 5 },
-                            input_b: WireRef { id: 2 }
+                            input_a: WireRef { id: 0 },
+                            input_b: WireRef { id: 7 }
                         },
-                        output: WireRef { id: 7 }
+                        output: WireRef { id: 3 }
                     }
                 ],
                 // O=cout
                 vec![Gate {
                     internal: Binary {
                         gate_type: NAND,
-                        input_a: WireRef { id: 7 },
-                        input_b: WireRef { id: 6 }
+                        input_a: WireRef { id: 3 },
+                        input_b: WireRef { id: 1 }
                     },
                     output: WireRef { id: 4 }
                 }]
             ]
         );
+        assert_eq!(
+            circuit.wires,
+            vec![
+                WireRef { id: 0 },
+                WireRef { id: 1 },
+                WireRef { id: 2 },
+                WireRef { id: 3 },
+                WireRef { id: 4 },
+                WireRef { id: 5 },
+                WireRef { id: 6 },
+                WireRef { id: 7 }
+            ]
+        );
+        assert_eq!(
+            circuit.inputs,
+            vec![WireRef { id: 5 }, WireRef { id: 6 }, WireRef { id: 7 }]
+        );
+        assert_eq!(circuit.outputs, vec![WireRef { id: 2 }, WireRef { id: 4 }]);
     }
 }
