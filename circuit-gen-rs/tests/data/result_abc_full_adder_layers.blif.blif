@@ -1,0 +1,21 @@
+.model full_add
+.inputs a b cin
+.outputs sum cout
+.gate XOR  a=b b=a O=new_n6_  -> Gate LAYER0; new_n6_ => LAYER1
+.gate XOR  a=new_n6_ b=cin O=sum -> Gate LAYER1, b/c "new_n6_" is LAYER1; sum => LAYER2
+.gate NAND a=b b=a O=new_n8_ -> Gate LAYER0; new_n8_ => LAYER1
+.gate NAND a=new_n6_ b=cin O=new_n9_ -> Gate LAYER1, b/c "new_n6_" is LAYER1; new_n9_ => LAYER2
+.gate NAND a=new_n9_ b=new_n8_ O=cout -> Gate LAYER2, b/c "new_n9_" is LAYER2; [and new_n8_ is LAYER0]; => cout => LAYER3
+.end
+
+
+# TODO? change the Circuit struct??
+# Vec<Vec<Gate>> but instead of being layer; it needs to represent "independent flows" or something like that
+# eg full adder:
+# - XOR new_n6_ -> XOR sum
+# - NAND new_n8_ -> NAND new_n9_ -> NAND cout
+# Can be evaluated in parallel
+# Doing it that way is better data wise b/c we DO NOT need to share the WireLabel; MAYBE HOPEFULLY?
+# BONUS: we know the last element in the "sub-Gates Vec" is an output; so no need for the if in the "main gate loop"
+#
+# FAIL: can not do that: dependency cf "new_n6_"

@@ -56,7 +56,13 @@ use serialize_deserialize::{deserialize_from_buffer_postcard, serialize_to_buffe
 pub(crate) struct CircuitInternal {
     pub(crate) inputs: Vec<WireRef>,
     pub(crate) outputs: Vec<WireRef>,
-    pub(crate) gates: Vec<gate::Gate>,
+    /// Transform Vec<Gates> -> Vec<Vec<Gates>>
+    /// That is how we represent the "layers"; ie what will be garbleable / evaluable in parallel
+    /// eg:
+    /// - gate layer 0: gates with NO inputs dependency
+    /// - gate layer 1: gates whose at least one input depends on the "layer 0" outputs
+    /// - etc
+    pub(crate) gates: Vec<Vec<gate::Gate>>,
     pub(crate) wires: Vec<WireRef>,
 }
 
@@ -182,7 +188,7 @@ impl Circuit {
     }
 
     #[must_use]
-    pub fn get_gates(&self) -> &Vec<Gate> {
+    pub fn get_gates(&self) -> &Vec<Vec<Gate>> {
         &self.circuit.gates
     }
 
@@ -200,14 +206,14 @@ impl Circuit {
             circuit: CircuitInternal {
                 inputs: vec![WireRef { id: 0 }, WireRef { id: 1 }],
                 outputs: vec![WireRef { id: 2 }],
-                gates: vec![Gate {
+                gates: vec![vec![Gate {
                     internal: GateType::Binary {
                         gate_type: gate_binary_type,
                         input_a: WireRef { id: 0 },
                         input_b: WireRef { id: 1 },
                     },
                     output: WireRef { id: 2 },
-                }],
+                }]],
                 wires: vec![WireRef { id: 0 }, WireRef { id: 1 }, WireRef { id: 2 }],
             },
             display_config: None,
@@ -223,13 +229,13 @@ impl Circuit {
             circuit: CircuitInternal {
                 inputs: vec![WireRef { id: 0 }],
                 outputs: vec![WireRef { id: 1 }],
-                gates: vec![Gate {
+                gates: vec![vec![Gate {
                     internal: GateType::Unary {
                         gate_type: gate_unary_type,
                         input_a: WireRef { id: 0 },
                     },
                     output: WireRef { id: 1 },
-                }],
+                }]],
                 wires: vec![WireRef { id: 0 }, WireRef { id: 1 }],
             },
             display_config: None,
@@ -245,10 +251,10 @@ impl Circuit {
             circuit: CircuitInternal {
                 inputs: vec![WireRef { id: 0 }],
                 outputs: vec![WireRef { id: 1 }],
-                gates: vec![Gate {
+                gates: vec![vec![Gate {
                     internal: GateType::Constant { value },
                     output: WireRef { id: 1 },
-                }],
+                }]],
                 wires: vec![WireRef { id: 0 }, WireRef { id: 1 }],
             },
             display_config: None,
@@ -305,7 +311,7 @@ impl Circuit {
         // cf https://github.com/trailofbits/mcircuit/blob/8fe9b315f2e8cae6020a2884ae544d59bd0bbd41/src/parsers/blif.rs#L194
         // For how to match blif/skcd gates into mcircuit's Operation
         // WARNING: apparently Operation::XXX is (OUTPUT, INPUT1, etc)! OUTPUT IS FIRST!
-        for gate in &self.circuit.gates {
+        for gate in self.circuit.gates.iter().flatten() {
             let bdd_gate: BDDFunc = match gate.get_type() {
                 GateType::Binary {
                     gate_type: r#type,
