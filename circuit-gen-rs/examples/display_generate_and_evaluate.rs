@@ -5,7 +5,11 @@
 //! It is double uses:
 //! - it CAN be used to test evaluation: eg ``
 //! - it CAN also be used to write new Circuits to file; eg to update the tests in various repos
-//!   eg `cargo run --features="eval_plain" --example display_generate_and_evaluate -- --width=640 --height=360 --output-path=display_message_640x360_2digits.skcd.postcard.bin --nb-evals=0`
+//!   eg `cargo run --features="eval_plain" --example display_generate_and_evaluate -- --width=400 --height=288 --output-path=display_message_640x360_2digits.skcd.postcard.bin --nb-evals=0`
+//!     - previously width: 1080 / 2 = 640; now we crop a bit so 800 / 2 = 400
+//!     - previously height: based on 16/9 ratio: 640 * 9 / 16 = 360
+//!       but unused pixels at top and bottom(no digit, and never a watermark) so we crop also vertically
+//!       360 * 0.80 (because digits were drawn with 0.1 offset and padding) = 288
 //!   or `cargo run --features="eval_plain" --example display_generate_and_evaluate -- --width=590 --height=50 --is-pinpad --watermark-msg= --output-path=display_pinpad_590x50.skcd.postcard.bin --nb-evals=0`
 //!
 
@@ -16,9 +20,6 @@ use clap::Parser;
 use rand::distributions::Uniform;
 use rand::prelude::Distribution;
 use rand::thread_rng;
-use std::io::BufReader;
-use std::io::Read;
-use std::path::Path;
 
 use lib_circuits_rs::generate_display_circuit;
 use png_utils::write_png;
@@ -195,22 +196,12 @@ fn prepare_evaluator_inputs(circ: &Circuit) -> Result<Vec<EvaluatorInput>, Inter
 fn main() {
     let args = Args::parse();
 
-    // cf circuit-gen-rs/tests/display_test.rs
-    // and mostly `call_grpc_display_one` in repo /pallets/pallets/ocw-circuits/src/lib.rs
-    // It should match, but only for the sake of consistancy
-    let digits_bboxes = vec![
-        // first digit bbox --------------------------------------------
-        0.25_f32, 0.1_f32, 0.45_f32, 0.9_f32,
-        // second digit bbox -------------------------------------------
-        0.55_f32, 0.1_f32, 0.75_f32, 0.9_f32,
-    ];
-
     let (digits_bboxes, digits) = if !args.is_pinpad {
         let digits_bboxes = vec![
             // first digit bbox --------------------------------------------
-            0.25_f32, 0.1_f32, 0.45_f32, 0.9_f32,
+            0.1625_f32, 0.0_f32, 0.45_f32, 1.0_f32,
             // second digit bbox -------------------------------------------
-            0.55_f32, 0.1_f32, 0.75_f32, 0.9_f32,
+            0.55_f32, 0.0_f32, 0.8375_f32, 1.0_f32,
         ];
         let digits = vec![4, 2];
 
@@ -258,11 +249,11 @@ fn main() {
     let height = display_config.height as usize;
 
     let mut merged_outputs = vec![0u8; width * height];
-    let mut temp_outputs = vec![0u8; width * height];
+    let mut temp_outputs = vec![];
     let mut rng = thread_rng();
     let rand_0_1 = Uniform::from(0..=1);
 
-    let mut encoded_garbler_inputs =
+    let encoded_garbler_inputs =
         garbled_display_circuit_prepare_garbler_inputs(&circuit, &digits, &args.watermark_msg)
             .unwrap();
 
@@ -296,7 +287,7 @@ fn main() {
 
     // convert (0,1) -> (0,255) to get a proper png
     for merged_output in merged_outputs.iter_mut() {
-        *merged_output = *merged_output * 255;
+        *merged_output *= 255;
     }
 
     write_png("eval_outputs.png", width, height, &merged_outputs);
