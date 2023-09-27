@@ -5,7 +5,7 @@
 //! It is double uses:
 //! - it CAN be used to test evaluation: eg ``
 //! - it CAN also be used to write new Circuits to file; eg to update the tests in various repos
-//!   eg `cargo run --features="eval_plain" --example display_generate_and_evaluate -- --width=640 --height=360 --output-path=display_message_640x360_2digits.skcd.postcard.bin --nb-evals=0`
+//!   eg `cargo run --features="eval_plain" --example display_generate_and_evaluate -- --width=400 --height=288 --output-path=display_message_640x360_2digits.skcd.postcard.bin --nb-evals=0`
 //!   or `cargo run --features="eval_plain" --example display_generate_and_evaluate -- --width=590 --height=50 --is-pinpad --watermark-msg= --output-path=display_pinpad_590x50.skcd.postcard.bin --nb-evals=0`
 //!
 
@@ -16,11 +16,10 @@ use clap::Parser;
 use rand::distributions::Uniform;
 use rand::prelude::Distribution;
 use rand::thread_rng;
-use std::io::BufReader;
-use std::io::Read;
-use std::path::Path;
 
-use lib_circuits_rs::generate_display_circuit;
+use lib_circuits_rs::{
+    generate_display_circuit, get_default_message_bbox, get_default_pinpad_bboxes,
+};
 use png_utils::write_png;
 
 /// NOTE: the default is a "message" circuit; with a small resolution of 120x52
@@ -195,51 +194,13 @@ fn prepare_evaluator_inputs(circ: &Circuit) -> Result<Vec<EvaluatorInput>, Inter
 fn main() {
     let args = Args::parse();
 
-    // cf circuit-gen-rs/tests/display_test.rs
-    // and mostly `call_grpc_display_one` in repo /pallets/pallets/ocw-circuits/src/lib.rs
-    // It should match, but only for the sake of consistancy
-    let digits_bboxes = vec![
-        // first digit bbox --------------------------------------------
-        0.25_f32, 0.1_f32, 0.45_f32, 0.9_f32,
-        // second digit bbox -------------------------------------------
-        0.55_f32, 0.1_f32, 0.75_f32, 0.9_f32,
-    ];
-
     let (digits_bboxes, digits) = if !args.is_pinpad {
-        let digits_bboxes = vec![
-            // first digit bbox --------------------------------------------
-            0.25_f32, 0.1_f32, 0.45_f32, 0.9_f32,
-            // second digit bbox -------------------------------------------
-            0.55_f32, 0.1_f32, 0.75_f32, 0.9_f32,
-        ];
+        let digits_bboxes = get_default_message_bbox();
         let digits = vec![4, 2];
 
         (digits_bboxes, digits)
     } else {
-        // IMPORTANT: by convention the "pinpad" is 10 digits, placed horizontally(side by side)
-        // DO NOT change the layout, else wallet-app will NOT display the pinpad correctly!
-        // That is b/c this layout in treated as a "texture atlas" so the positions MUST be known.
-        // Ideally the positions SHOULD be passed from here all the way into the serialized .pgarbled/.packmsg
-        // but this NOT YET the case.
-
-        // 10 digits, 4 corners(vertices) per digit
-        let mut digits_bboxes: Vec<f32> = Vec::with_capacity(10 * 4);
-        /*
-        for (int i = 0; i < 10; i++) {
-            digits_bboxes.emplace_back(0.1f * i, 0.0f, 0.1f * (i + 1), 1.0f);
-        }
-        */
-        for i in 0..10 {
-            digits_bboxes.append(
-                vec![
-                    0.1_f32 * i as f32,
-                    0.0_f32,
-                    0.1_f32 * (i + 1) as f32,
-                    1.0_f32,
-                ]
-                .as_mut(),
-            );
-        }
+        let digits_bboxes = get_default_pinpad_bboxes();
         let digits = vec![7, 8, 9, 0, 1, 2, 6, 5, 4, 3];
 
         (digits_bboxes, digits)
@@ -258,11 +219,11 @@ fn main() {
     let height = display_config.height as usize;
 
     let mut merged_outputs = vec![0u8; width * height];
-    let mut temp_outputs = vec![0u8; width * height];
+    let mut temp_outputs = vec![];
     let mut rng = thread_rng();
     let rand_0_1 = Uniform::from(0..=1);
 
-    let mut encoded_garbler_inputs =
+    let encoded_garbler_inputs =
         garbled_display_circuit_prepare_garbler_inputs(&circuit, &digits, &args.watermark_msg)
             .unwrap();
 
@@ -296,7 +257,7 @@ fn main() {
 
     // convert (0,1) -> (0,255) to get a proper png
     for merged_output in merged_outputs.iter_mut() {
-        *merged_output = *merged_output * 255;
+        *merged_output *= 255;
     }
 
     write_png("eval_outputs.png", width, height, &merged_outputs);
