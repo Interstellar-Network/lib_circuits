@@ -31,6 +31,8 @@ extern crate alloc;
 #[cfg(feature = "alloc")]
 use alloc::string::ToString;
 #[cfg(feature = "alloc")]
+use alloc::vec;
+#[cfg(feature = "alloc")]
 use alloc::vec::Vec;
 
 // re-export for ease-of-use in pallets
@@ -102,6 +104,54 @@ pub fn new_from_verilog(verilog_buf: &[u8]) -> Result<Circuit, CircuitParserErro
     })?;
 
     Circuit::new_generic_from_blif_buffer(&raw_buf)
+}
+
+/// cf circuit-gen-rs/circuit_crop.odg for details
+///
+/// - previous width: 1080 / 2 = 640; now we crop a bit so 800 / 2 = 400
+/// - previous height: based on 16/9 ratio: 640 * 9 / 16 = 360
+///     but unused pixels at top and bottom(no digit, and never a watermark) so we crop also vertically
+///     360 * 0.80 (because digits were drawn with 0.1 offset and padding) = 288
+///
+#[must_use]
+pub fn get_default_message_bbox() -> Vec<f32> {
+    vec![
+        // first digit bbox --------------------------------------------
+        0.1_f32, 0.0_f32, 0.42_f32, 1.0_f32,
+        // second digit bbox -------------------------------------------
+        0.58_f32, 0.0_f32, 0.9_f32, 1.0_f32,
+    ]
+}
+
+/// IMPORTANT: by convention the "pinpad" is 10 digits, placed horizontally(side by side)
+/// DO NOT change the layout, else wallet-app will NOT display the pinpad correctly!
+/// That is b/c this layout in treated as a "texture atlas" so the positions MUST be known.
+/// Ideally the positions SHOULD be passed from here all the way into the serialized .pgarbled/.packmsg
+/// but this NOT YET the case.
+///
+#[must_use]
+#[allow(clippy::cast_precision_loss)]
+pub fn get_default_pinpad_bboxes() -> Vec<f32> {
+    // 10 digits, 4 corners(vertices) per digit
+    let mut digits_bboxes: Vec<f32> = Vec::with_capacity(10 * 4);
+    /*
+    for (int i = 0; i < 10; i++) {
+        digits_bboxes.emplace_back(0.1f * i, 0.0f, 0.1f * (i + 1), 1.0f);
+    }
+    */
+    for i in 0..10 {
+        digits_bboxes.append(
+            vec![
+                0.1_f32 * i as f32,
+                0.0_f32,
+                0.1_f32 * (i + 1) as f32,
+                1.0_f32,
+            ]
+            .as_mut(),
+        );
+    }
+
+    digits_bboxes
 }
 
 #[cxx::bridge]
